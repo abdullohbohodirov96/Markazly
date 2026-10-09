@@ -32,15 +32,15 @@ BG = raster(f'<rect width="{W}" height="{H}" fill="{BOARD}"/>{grid}<rect width="
 def ease(x): x = max(0, min(1, x)); return 1 - (1 - x) ** 3
 
 class El:
-    def __init__(self, body, t_in, t_out, dy=40, dur=.45, pop=False, bob=0):
+    def __init__(self, body, t_in, t_out, dy=40, dur=.45, pop=False, bob=0, fo=.3, jit=None):
         im = raster(body); bb = im.getbbox() or (0, 0, 1, 1)
         self.im, self.x, self.y = im.crop(bb), bb[0], bb[1]
-        self.t_in, self.t_out, self.dy, self.dur, self.pop, self.bob = t_in, t_out, dy, dur, pop, bob
+        self.t_in, self.t_out, self.dy, self.dur, self.pop, self.bob, self.fo, self.jit = t_in, t_out, dy, dur, pop, bob, fo, jit
     def draw(self, fr, t):
         if t < self.t_in or t > self.t_out: return
-        a = ease((t - self.t_in) / self.dur) * (1 - ease((t - (self.t_out - .3)) / .3) if t > self.t_out - .3 else 1)
+        a = (ease((t - self.t_in) / self.dur) if self.dur > 0 else 1) * ((1 - ease((t - (self.t_out - self.fo)) / self.fo)) if t > self.t_out - self.fo else 1)
         if a <= 0: return
-        k = ease((t - self.t_in) / self.dur)
+        k = ease((t - self.t_in) / self.dur) if self.dur > 0 else 1
         im = self.im; x, y = self.x, self.y + (1 - k) * self.dy
         if self.pop:
             s = .85 + .15 * k + .04 * math.sin(min(1, (t - self.t_in) / .5) * math.pi)
@@ -48,6 +48,7 @@ class El:
             x += (im.width - nw) / 2; y += (im.height - nh) / 2
             im = im.resize((nw, nh), Image.BILINEAR)
         if self.bob: y += self.bob * math.sin((t - self.t_in) * 2 * math.pi * 1.4)
+        if self.jit and self.jit[0] <= t <= self.jit[1]: x += 14 * math.sin(t * 157); y += 6 * math.cos(t * 211)
         if a < 1:
             al = im.getchannel("A").point(lambda v: int(v * a)); im = im.copy(); im.putalpha(al)
         fr.alpha_composite(im, (int(round(x)), int(round(y))))
@@ -63,13 +64,22 @@ lx = CX - lw / 2
 brand = f'<image href="{MARK}" x="{lx}" y="210" width="{mkw:.0f}" height="{mk}"/>' + T("Markaz", lx + mkw + 14, 258, 44, SEMI, FG) + T("ly", lx + mkw + 14 + SEMI.width("Markaz", 44), 258, 44, SEMI, "url(#gh)")
 add(brand, -1, DUR + 1, dy=0)
 
-# ── A. hook 0–5.1
-add('<circle cx="540" cy="820" r="520" fill="url(#rd)"/>', v(4.0), v(5.6), dy=0, dur=.5)
+# ── A. hook 0–5.1 : a notification from the admin, then the number glitches into "?"
+NY = 360
+add('<circle cx="540" cy="900" r="560" fill="url(#rd)"/>', 1.15, v(5.6), dy=0, dur=.15, fo=.6)
+note = rr(90, NY, 900, 300, 44, "#F4F8F6") + f'<circle cx="170" cy="{NY+80}" r="44" fill="url(#g)"/>' + T("A", 170, NY + 96, 44, SEMI, INK, "middle")
+note += T("Admin", 236, NY + 74, 38, SEMI, INK) + T("hozir · Telegram", 236, NY + 114, 26, REG, "#5C7268")
+note += T("Bugungi tushum:", 130, NY + 196, 34, MED, "#3F5A4D")
+add(note, -0.5, v(5.6), dy=-60, dur=.35)
+add(T("5 960 000 so‘m", 130, NY + 262, 62, SEMI, "#0A7A50"), -0.5, 1.25, dy=0, dur=.1, fo=.06, jit=(0.95, 1.25))
+add(f'<line x1="122" y1="{NY+240}" x2="{130+SEMI.width("5 960 000 so‘m", 62)+8}" y2="{NY+240}" stroke="{BAD}" stroke-width="8" stroke-linecap="round"/>', 0.8, 1.25, dy=0, dur=.12, fo=.06)
+add(T("? ??? ??? so‘m", 130, NY + 262, 62, SEMI, BAD), 1.2, v(5.6), dy=0, dur=.05, pop=True, jit=(1.2, 1.45))
+add(f'<g transform="translate(860 {NY+40}) rotate(12)"><circle r="62" fill="{BAD}"/><path d="M0 -30 V10" stroke="#fff" stroke-width="12" stroke-linecap="round"/><circle cy="32" r="8" fill="#fff"/></g>', 1.25, v(5.6), dy=0, dur=.25, pop=True)
 for i, (t, c) in enumerate([("Administratoringiz", FG), ("hisobotni to‘g‘ri", FG), ("qilyaptimi?", "url(#gh)")]):
-    add(T(t, CX, 620 + i * 130, 104 if i < 2 else 120, SEMI, c, "middle"), -0.7 + i * .15, v(5.6), dur=.35)
+    add(T(t, CX, 830 + i * 120, 96 if i < 2 else 112, SEMI, c, "middle"), -0.3 + i * .45, v(5.6), dur=.3)
 s_ = "Siz buni bilmaysiz."
 sw_ = SEMI.width(s_, 64) + 100
-add(rr(CX - sw_ / 2, 1010, sw_, 120, 60, "#3A1D1A", BAD, 3) + T(s_, CX, 1092, 64, SEMI, BAD, "middle"), v(4.0), v(5.6), pop=True)
+add(rr(CX - sw_ / 2, 1150, sw_, 120, 60, "#3A1D1A", BAD, 3) + T(s_, CX, 1232, 64, SEMI, BAD, "middle"), v(4.0), v(5.6), pop=True)
 
 # ── B. admin's evening message
 cx0, cw = 120, 840
@@ -150,14 +160,24 @@ for a, b_, txt in SUBS:
 n = int(DUR * FPS)
 out = os.path.join(OUTDIR, "markazly_video1.mp4")
 ff = subprocess.Popen(["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
-                       "-i", os.path.join(os.path.dirname(OUTDIR), "audio", "voice.m4a"), "-af", "apad", "-shortest",
+                       "-i", os.path.join(os.path.dirname(OUTDIR), "audio", "voice_sfx.m4a"), "-af", "apad", "-shortest",
                        "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p", "-c:a", "aac", "-movflags", "+faststart", out], stdin=subprocess.PIPE)
 for i in range(n):
     t = i / FPS
     fr = BG.copy()
     for e in E: e.draw(fr, t)
+    if t < v(5.6):
+        z = 1 + 0.05 * ease(t / v(5.6))
+        if 1.2 <= t <= 1.45: z += 0.02
+        cw_, ch_ = W / z, H / z
+        ox = (W - cw_) / 2 + (10 * math.sin(t * 190) if 1.2 <= t <= 1.5 else 0)
+        oy = (H - ch_) / 2 + (8 * math.cos(t * 230) if 1.2 <= t <= 1.5 else 0)
+        fr = fr.crop((int(ox), int(oy), int(ox + cw_), int(oy + ch_))).resize((W, H), Image.BILINEAR)
+        if 1.2 <= t <= 1.4:
+            fl = Image.new("RGBA", (W, H), (255, 70, 60, int(90 * (1 - (t - 1.2) / .2))))
+            fr.alpha_composite(fl)
     ff.stdin.write(fr.convert("RGB").tobytes())
-    if i in [int(x * FPS) for x in (3.6, 9.0, 12.4, 16.5, 24.5, 28.8, 34.5, 37.5)]:
+    if i in [int(x * FPS) for x in (0.0, 0.5, 1.0, 1.3, 2.2, 4.2)]:
         fr.convert("RGB").save(os.path.join(OUTDIR, f"kadr_{t:04.1f}.png"))
 ff.stdin.close(); ff.wait()
 print("done", out)

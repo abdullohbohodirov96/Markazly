@@ -83,6 +83,7 @@ ICON = {
     "branch": '<path d="M3 21V9l6-4 6 4v12M15 21V12l6 3v6M2 21h20M7 13h4M7 17h4"/>',
     "door": '<path d="M5 21V4.5A1.5 1.5 0 016.5 3h11A1.5 1.5 0 0119 4.5V21M3 21h18"/><circle cx="15" cy="12.5" r=".9"/>',
     "arrow": '<path d="M12 4v16M5 13l7 7 7-7"/>',
+    "right": '<path d="M4 12h16M13 5l7 7-7 7"/>',
 }
 
 
@@ -218,71 +219,138 @@ def s_filiallar():
 
 # ───────────────────────── 4. Sayt
 def s_sayt():
-    b = T("Markazingizga", 80, 420, 86, SEMI, FG)
-    b += T("chiroyli sayt", 80, 514, 86, SEMI, "url(#gh)")
-    b += T("Nomingiz, logongiz va domeningiz bilan", 80, 578, 34, REG, MUTED)
-    # browser mockup
-    x, y, w = 80, 640, 920
-    b += rr(x, y, w, 720, 30, "#F7FAF8") + f'<rect x="{x}" y="{y}" width="{w}" height="70" rx="30" fill="#E3ECE7"/><rect x="{x}" y="{y+40}" width="{w}" height="30" fill="#E3ECE7"/>'
-    for i, c in enumerate([MINT, "#C3D3CB", "#C3D3CB"]):
-        b += f'<circle cx="{x+40+i*30}" cy="{y+35}" r="9" fill="{c}"/>'
-    b += rr(x + 150, y + 15, 640, 40, 20, "#F7FAF8") + ic("lock", x + 168, y + 23, 22, "#6B8478", 2) + T("markazingiz.uz", x + 200, y + 44, 24, MED, "#4A6357")
+    AMB1, AMB2 = "#F6C76B", "#E8873D"
+    b = T("Har markazga", 80, 420, 86, SEMI, FG)
+    b += T("o‘z sayti", 80, 514, 86, SEMI, "url(#gh)")
+    b += T("O‘z nomi, logosi va domeni bilan", 80, 578, 34, REG, MUTED)
+    x, y, w = 80, 636, 920
+    b += f'<defs><linearGradient id="amb" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="{AMB1}"/><stop offset="100%" stop-color="{AMB2}"/></linearGradient>' \
+         f'<radialGradient id="ambglow" cx="80%" cy="55%" r="55%"><stop offset="0%" stop-color="{AMB1}" stop-opacity=".18"/><stop offset="100%" stop-color="{AMB1}" stop-opacity="0"/></radialGradient></defs>'
+    b += rr(x, y, w, 760, 32, "#071510", LINE, 2)
+    # bar
+    b += f'<path d="M{x} {y+32} Q{x} {y} {x+32} {y} H{x+w-32} Q{x+w} {y} {x+w} {y+32} V{y+72} H{x} Z" fill="#0B1D16"/>'
+    for i, c in enumerate([MINT, LINE, LINE]):
+        b += f'<circle cx="{x+36+i*28}" cy="{y+36}" r="9" fill="{c}"/>'
+    b += rr(x + 140, y + 16, 660, 42, 21, "#06120D", LINE, 2) + ic("lock", x + 160, y + 25, 22, MUTED, 2) + T("nuracademy.uz", x + 194, y + 45, 24, MED, FG)
     # nav
-    b += rr(x + 40, y + 100, 46, 46, 12, "#0A1F17") + T("[Markaz nomi]", x + 102, y + 134, 28, SEMI, "#0A1F17")
-    b += rr(x + 650, y + 98, 230, 52, 26, "#0A1F17") + T("Ariza qoldirish", x + 765, y + 132, 24, MED, FG, "middle")
-    # hero band
-    b += rr(x + 40, y + 180, w - 80, 330, 26, "#0A1F17")
-    pp, _ = pill("Yangi guruhlar ochildi", x + 76, y + 216, 22, "#123A2C", MINT, MED, 16, 44)
+    b += rr(x + 36, y + 100, 52, 52, 14, "url(#amb)") + T("N", x + 62, y + 138, 28, SEMI, "#2A1400", "middle")
+    b += T("Nur Academy", x + 104, y + 137, 32, SEMI, FG)
+    b += rr(x + 740, y + 102, 144, 50, 25, FG) + T("Ariza", x + 812, y + 135, 24, SEMI, INK, "middle")
+    # hero
+    b += rr(x + 2, y + 180, w - 4, 340, 0, "url(#ambglow)")
+    pp, _ = pill("Yangi guruhlar ochildi", x + 40, y + 196, 22, "#2A2412", AMB1, MED, 16, 44)
     b += pp
-    hero, last = P("Chet tilini birinchi darsdan gapirib o‘rganing", x + 76, y + 300, 38, 500, SEMI, FG, 1.18)
+    hero, _ = P("Ingliz tilida birinchi darsdan gapiring", x + 40, y + 300, 44, 540, SEMI, FG, 1.15)
     b += hero
-    b += rr(x + 76, y + 428, 330, 58, 29, "url(#gh)") + T("Bepul darsga yozilish", x + 241, y + 466, 25, SEMI, INK, "middle")
-    b += f'<circle cx="{x+740}" cy="{y+345}" r="120" fill="#123A2C"/>' + ic("cap", x + 660, y + 265, 160)
-    # chips
-    cx = x + 40
-    for icn, t in [("globe", "Ingliz tili"), ("book", "Arab tili"), ("chart", "IELTS")]:
-        cw = 260
-        b += rr(cx, y + 540, cw, 130, 22, "#EAF2EE") + ic(icn, cx + 28, y + 568, 40, "#0F9A63", 2) + T(t, cx + 28, y + 645, 28, SEMI, "#0A1F17")
-        cx += cw + 20
-    # bullets
-    yy = y + 790
-    for t in ["Saytdagi ariza darhol tizimga tushadi", "Telefonda ham chiroyli ko‘rinadi", "Reklama uchun alohida landing page"]:
-        b += ic("check", 80, yy - 32, 40, MINT, 2.6) + T(t, 140, yy, 34, MED, FG)
-        yy += 66
-    save("4_Sayt", frame(b, "Veb-sayt"))
+    b += T("Kichik guruhlar va bepul sinov darsi", x + 40, y + 420, 26, REG, MUTED)
+    b += rr(x + 40, y + 446, 320, 60, 30, "url(#amb)") + T("Bepul darsga yozilish", x + 200, y + 485, 24, SEMI, "#2A1400", "middle")
+    b += rr(x + 640, y + 214, 240, 240, 30, "#12281F", LINE, 2) + ic("cap", x + 690, y + 264, 140, AMB1, 1.5)
+    b += rr(x + 600, y + 420, 210, 54, 14, FG) + T("Bepul sinov darsi", x + 705, y + 455, 22, SEMI, INK, "middle")
+    # courses
+    cols = [("url(#amb)", "General English", "A1 — C1"), ("url(#gh)", "IELTS", "Mock test"), ("#7B86FF", "Bolalar uchun", "7–12 yosh")]
+    cx = x + 36
+    for g, t, s in cols:
+        b += rr(cx, y + 548, 270, 150, 22, "#0C1F18", LINE, 2) + rr(cx + 24, y + 572, 222, 8, 4, g)
+        b += T(t, cx + 24, y + 632, 28, SEMI, FG) + T(s, cx + 24, y + 672, 24, REG, MUTED)
+        cx += 270 + 19
+    # flow
+    yy = y + 812
+    steps = ["Reklama", "Sayt", "Ariza tizimda"]
+    fx = 80
+    for i, s in enumerate(steps):
+        on = i == 2
+        p_, pw_ = pill(s, fx, yy, 28, "#123A2C" if on else SURF, MINT if on else MUTED, SEMI if on else MED, 24, 64)
+        b += p_; fx += pw_ + 16
+        if i < 2:
+            b += ic("right", fx, yy + 14, 36, MUTED, 2.2); fx += 52
+    save("4_Sayt", frame(b, "Markaz sayti"))
 
 
 # ───────────────────────── 5. Kabinet
 def s_kabinet():
-    b = T("O‘quvchi kabineti", 80, 420, 80, SEMI, FG)
-    b += T("Ota-ona hammasini telefonidan ko‘radi", 80, 484, 34, REG, MUTED)
-    # phone
-    px, py, pw, ph = 250, 560, 580, 1000
-    b += rr(px - 14, py - 14, pw + 28, ph + 28, 86, "#020806") + rr(px, py, pw, ph, 74, SURF)
-    b += rr(px + pw / 2 - 90, py + 26, 180, 36, 18, "#020806")
-    b += f'<circle cx="{px+70}" cy="{py+130}" r="38" fill="url(#g)"/>' + T("A", px + 70, py + 146, 38, SEMI, INK, "middle")
-    b += T("Xush kelibsiz", px + 128, py + 118, 24, REG, MUTED) + T("Aziza Sobirova", px + 128, py + 156, 32, SEMI, FG)
-    cards = [("cal", "Bugungi dars", "18:00 · 3-xona", False), ("book", "Uyga vazifa", "Unit 5 · 2 ta mashq", False),
-             ("tick", "Keyingi to‘lov · 20-noyabr", "To‘langan", True)]
-    cy = py + 210
+    b = T("Darslar, vazifa", 80, 410, 80, SEMI, FG)
+    b += T("va lug‘at", 80, 500, 80, SEMI, "url(#gh)")
+    b += T("O‘quvchi va ota-ona telefonida", 80, 562, 34, REG, MUTED)
+    # phone (left)
+    px, py, pw = 80, 626, 470
+    b += rr(px - 12, py - 12, pw + 24, 1024, 74, "#020806") + rr(px, py, pw, 1000, 62, SURF)
+    b += rr(px + pw / 2 - 75, py + 22, 150, 30, 15, "#020806")
+    b += f'<circle cx="{px+62}" cy="{py+112}" r="32" fill="url(#g)"/>' + T("A", px + 62, py + 126, 32, SEMI, INK, "middle")
+    b += T("B1 guruh", px + 110, py + 102, 22, REG, MUTED) + T("Aziza Sobirova", px + 110, py + 136, 28, SEMI, FG)
+    cards = [("cal", "Bugungi dars", "18:00 · Present Perfect", False), ("book", "Uyga vazifa · ertaga", "Unit 5 · 2 ta mashq", False),
+             ("cap", "Lug‘at · bugun", "12 ta yangi so‘z", False), ("tick", "Keyingi to‘lov", "To‘langan", True)]
+    cy = py + 180
     for icn, s1, s2, paid in cards:
-        b += rr(px + 32, cy, pw - 64, 140, 30, "url(#gh)" if paid else SURF2)
-        b += ic(icn, px + 66, cy + 46, 48, INK if paid else "url(#g)", 2)
-        b += T(s1, px + 140, cy + 60, 24, REG, "#0B3A26" if paid else MUTED) + T(s2, px + 140, cy + 104, 32, SEMI, INK if paid else FG)
-        cy += 158
-    b += rr(px + 32, cy, pw - 64, 150, 30, SURF2)
-    b += T("Shu oy davomati", px + 66, cy + 58, 26, REG, MUTED) + T("92%", px + pw - 66, cy + 60, 34, SEMI, FG, "end")
-    b += rr(px + 66, cy + 92, pw - 132, 16, 8, LINE) + rr(px + 66, cy + 92, (pw - 132) * .92, 16, 8, MINT)
-    cy += 172
-    b += ic("send", px + 66, cy + 4, 30, TEAL, 2) + T("Eslatmalar Telegram orqali keladi", px + 110, cy + 30, 24, MED, MUTED)
+        b += rr(px + 24, cy, pw - 48, 128, 26, "url(#gh)" if paid else SURF2)
+        b += ic(icn, px + 50, cy + 42, 44, INK if paid else "url(#g)", 2)
+        b += T(s1, px + 114, cy + 54, 22, REG, "#0B3A26" if paid else MUTED) + T(s2, px + 114, cy + 94, 27, SEMI, INK if paid else FG)
+        cy += 142
+    b += rr(px + 24, cy + 6, pw - 48, 76, 22, "#07150F")
+    for i, icn in enumerate(["grid", "book", "cap", "wallet"]):
+        b += ic(icn, px + 70 + i * 92, cy + 26, 36, MINT if i == 0 else "#5F7D70", 2)
+    # feature cards (right)
+    rx, rw = 590, 410
+    feats = [("book", "Darslar", "Mavzu, izoh va materiallar"), ("tick", "Uyga vazifa", "Topshiradi, ustoz baholaydi"),
+             ("cap", "Lug‘at", "Kartochka bilan takrorlash"), ("users", "Ota-ona", "Darsga keldi — xabar")]
+    fy = 626
+    for icn, t, d in feats:
+        hl = t == "Lug‘at"
+        b += rr(rx, fy, rw, 220, 28, "url(#best)" if hl else "url(#card)", MINT if hl else LINE, 2)
+        b += rr(rx + 28, fy + 28, 64, 64, 18, "#123A2C") + ic(icn, rx + 42, fy + 42, 36)
+        b += T(t, rx + 28, fy + 140, 36, SEMI, FG)
+        ln, _ = P(d, rx + 28, fy + 184, 25, rw - 56, REG, MUTED)
+        b += ln
+        fy += 220 + 18
     save("5_Kabinet", frame(b, "O‘quvchi kabineti"))
+
+
+# ───────────────────────── 5b. Gamifikatsiya
+def s_gamifikatsiya():
+    b = T("O‘qish —", 80, 410, 86, SEMI, FG)
+    b += T("o‘yindek qiziq", 80, 504, 86, SEMI, "url(#gh)")
+    p_, _ = pill("QO‘SHIMCHA MODUL", 80, 540, 22, MINT, INK, SEMI, 18, 46)
+    b += p_
+    # rules
+    b += rr(80, 616, 920, 470, 30, "url(#card)", LINE, 2)
+    b += T("Ball qanday yig‘iladi", 120, 680, 34, SEMI, FG)
+    rules = [("Darsga keldi", "+10", GOOD), ("Vazifani muddatida topshirdi", "+15", GOOD), ("To‘lovni vaqtida qildi", "+20", GOOD),
+             ("Oyda dars qoldirmadi", "+50", GOOD), ("Do‘stini olib keldi", "+100", GOOD), ("Sababsiz kelmadi", "−5", BAD)]
+    ry = 742
+    for t, v, c in rules:
+        b += T(t, 120, ry, 29, REG, FG) + T(v, 960, ry, 30, SEMI, c, "end")
+        if t != rules[-1][0]:
+            b += f'<line x1="120" y1="{ry+20}" x2="960" y2="{ry+20}" stroke="{LINE}" stroke-width="2"/>'
+        ry += 62
+    # level
+    b += rr(80, 1108, 920, 196, 30, "url(#card)", LINE, 2)
+    b += T("Aziza · Bilimdon", 120, 1170, 32, SEMI, FG) + T("1 248 / 1 500", 960, 1170, 28, MED, MUTED, "end")
+    b += rr(120, 1196, 840, 20, 10, LINE) + rr(120, 1196, 840 * .64, 20, 10, "url(#gh)")
+    bx = 120
+    for bd in ["Temir intizom", "Oy yulduzi"]:
+        p_, pw_ = pill(bd, bx, 1236, 24, SURF2, FG, MED, 18, 46)
+        b += p_; bx += pw_ + 12
+    # rating + shop
+    b += rr(80, 1326, 448, 300, 30, "url(#card)", LINE, 2)
+    b += T("Guruh reytingi", 116, 1384, 28, SEMI, FG)
+    for i, (n, s, col) in enumerate([("Jasur R.", "412", "#F6C76B"), ("Aziza S.", "385", "#C9D6D0"), ("Madina K.", "340", "#D9946B")]):
+        yy = 1420 + i * 66
+        if i == 1:
+            b += rr(100, yy, 408, 56, 14, "#123A2C", MINT, 2)
+        b += f'<circle cx="{136}" cy="{yy+28}" r="18" fill="{col}"/>' + T(str(i + 1), 136, yy + 37, 22, SEMI, INK, "middle")
+        b += T(n, 170, yy + 38, 26, MED, FG) + T(s, 490, yy + 38, 26, SEMI, MINT, "end")
+    b += rr(552, 1326, 448, 300, 30, "url(#card)", LINE, 2)
+    b += T("Sovg‘alar do‘koni", 588, 1384, 28, SEMI, FG)
+    for i, (n, s) in enumerate([("Daftar", "300"), ("Futbolka", "1 000"), ("Bepul dars", "1 500"), ("10% chegirma", "2 000")]):
+        yy = 1436 + i * 50
+        b += T(n, 588, yy, 25, REG, FG) + T(s + " ball", 964, yy, 24, SEMI, MINT, "end")
+    save("5b_Gamifikatsiya", frame(b, "Gamifikatsiya"))
 
 
 # ───────────────────────── 6. Bepul sinov
 def s_sinov():
     b = T("7 kun", W / 2, 520, 220, SEMI, "url(#gh)", "middle")
     b += T("bepul sinab ko‘ring", W / 2, 616, 64, SEMI, FG, "middle")
-    b += T("Yoqsa — keyin to‘laysiz", W / 2, 680, 36, REG, MUTED, "middle")
+    b += T("Ro‘yxatdan o‘tish — atigi 3 daqiqa", W / 2, 680, 36, REG, MUTED, "middle")
     steps = [("Tanishuv", "Markazingizga kelib, tizimni ko‘rsatamiz"),
              ("7 kun sinov", "Ma’lumotlaringizni o‘zimiz yuklaymiz"),
              ("Tarif tanlash", "Yoqsa, 2 oylik to‘lov qilasiz"),
@@ -318,12 +386,12 @@ def s_aloqa():
     save("7_Aloqa", frame(b, "Aloqa"))
 
 
-for f in (s_tariflar, s_imkoniyat, s_filiallar, s_sayt, s_kabinet, s_sinov, s_aloqa):
+for f in (s_tariflar, s_imkoniyat, s_filiallar, s_sayt, s_kabinet, s_gamifikatsiya, s_sinov, s_aloqa):
     f()
 
 # contact sheet
 from PIL import Image
-names = ["1_Tariflar", "2_Imkoniyat", "3_Filiallar", "4_Sayt", "5_Kabinet", "6_Bepul_sinov", "7_Aloqa"]
+names = ["1_Tariflar", "2_Imkoniyat", "3_Filiallar", "4_Sayt", "5_Kabinet", "5b_Gamifikatsiya", "6_Bepul_sinov", "7_Aloqa"]
 tw, th = 360, 640
 sheet = Image.new("RGB", (20 + len(names) * (tw + 20), th + 40), (237, 244, 240))
 for i, n in enumerate(names):

@@ -46,7 +46,7 @@ Mahalliy sinash: `cd sayt && TELEGRAM_BOT_TOKEN=... TELEGRAM_CHAT_ID=... npm sta
 
 Himoya: yashirin "honeypot" maydon (botlar uchun), bir IP dan 10 daqiqada 5 tadan ko‘p ariza qabul qilinmaydi. Server ishlamasa, forma arizani Telegram orqali qo‘lda yuborishni taklif qiladi.
 
-> `index.html` ni tahrirlamang — `shablon.html` ni o‘zgartiring, keyin logolarni `{{MARK}}`/`{{WORD}}` o‘rniga qo‘yib `index.html` ni qayta yig‘ing.
+> `index.html` ni tahrirlamang — `shablon.html` ni o‘zgartiring va `python3 sayt/build.py brand/logo/markazly_belgi_shaffof.png brand/logo/markazly_yozuv_shaffof.png` bilan qayta yig‘ing.
 
 ## Brend
 

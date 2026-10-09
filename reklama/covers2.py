@@ -133,16 +133,40 @@ def v_all(x, y, w, h):
         tx = x + 40 + (k % 3) * (tw + 20); ty = y + 40 + (k // 3) * (th + 20)
         o += rr(tx, ty, tw, th, 24, SURF2) + f'<circle cx="{tx+tw/2:.0f}" cy="{ty+70}" r="44" fill="#123A2C"/>' + ic(icn, tx + tw / 2 - 24, ty + 46, 48, MINT, 2) + T(nm, tx + tw / 2, ty + 150, 28, SEMI, FG, "middle")
     return o
+def v_excel(x, y, w, h):
+    o = rr(x + 30, y + 40, 380, 340, 22, "#F2F4F3") + rr(x + 30, y + 40, 380, 56, 22, "#1D6F42") + T("Excel", x + 60, y + 80, 28, SEMI, "#fff")
+    o += "".join(rr(x + 50, y + 116 + k * 36, 340, 22, 6, "#D5DBD8") for k in range(5))
+    o += rr(x + 90, y + 300, 260, 64, 32, "#3A1D1A", BAD, 3) + T("10:00", x + 220, y + 345, 40, SEMI, BAD, "middle")
+    o += f'<circle cx="{x+w/2}" cy="{y+210}" r="44" fill="#0D2620" stroke="#F4F8F6" stroke-width="4"/>' + T("VS", x + w / 2, y + 222, 32, SEMI, FG, "middle")
+    o += rr(x + w - 410, y + 40, 380, 340, 22, SURF2, MINT, 3) + f'<image href="{MARK}" x="{x+w-380}" y="{y+56}" width="{40*342/377:.0f}" height="40"/>' + T("Markazly", x + w - 330, y + 86, 26, SEMI, FG)
+    o += "".join(rr(x + w - 390, y + 116 + k * 44, 340, 32, 10, "#11302A") + T("Qarz", x + w - 370, y + 140 + k * 44, 18, MED, MUTED) for k in range(3))
+    o += rr(x + w - 350, y + 300, 260, 64, 32, "#123A2C", MINT, 3) + T("00:03", x + w - 220, y + 345, 40, SEMI, MINT, "middle")
+    return o
+def v_price(x, y, w, h):
+    o = T("KUNIGA", x + 230, y + 110, 34, SEMI, MINT, "middle") + T("10 000", x + 230, y + 230, 120, SEMI, "url(#gh)", "middle") + T("so‘m", x + 230, y + 290, 40, MED, FG, "middle")
+    o += f'<g transform="translate({x+640} {y+220})"><path d="M-150 -10 H150 A150 130 0 0 1 -150 -10 Z" fill="#F6C76B"/><path d="M-128 -10 Q0 -96 128 -10 Z" fill="#F4F8F6"/><circle cx="-40" cy="-44" r="12" fill="#E8873D"/><circle cx="24" cy="-52" r="10" fill="#E8873D"/><circle cx="64" cy="-32" r="9" fill="#46D98F"/></g>'
+    o += T("= 1 tushlik", x + 640, y + 380, 34, SEMI, FG, "middle")
+    return o
+def v_fears(x, y, w, h):
+    o = ""
+    for k, (l1, l2) in enumerate([("Ma’lumotlarim", "yo‘qolmaydimi?"), ("Xodimlarim", "o‘rgana oladimi?")]):
+        bx = x + 40 + k * 140; by = y + 40 + k * 180
+        o += rr(bx, by, 640, 150, 34, "#2A1D1B", "#5A2A24", 3) + T(l1, bx + 36, by + 64, 38, SEMI, "#F3D6D0") + T(l2, bx + 36, by + 116, 38, SEMI, "#F3D6D0")
+        o += f'<circle cx="{bx+640}" cy="{by+20}" r="40" fill="{MINT}"/>' + ic("check", bx + 622, by + 2, 36, INK, 3.2)
+    return o
 cover(1, "Hisobot", ["Admin", "hisobotiga", "ishonasizmi?"], v_admin, "cover_01_admin.png", True)
 cover(2, "Markazly", ["Markazingiz", "bitta tizimda", "to‘liq"], v_system, "cover_02_tizim.png")
 cover(3, "Qarzdorlar", ["Har oy", "qancha pul", "yo‘qotyapsiz?"], v_loss, "cover_03_yoqotish.png", True)
 cover(4, "Filiallar", ["Qaysi filialingiz", "zarar", "qilyapti?"], v_branch, "cover_04_filiallar.png", True)
 cover(5, "Ota-onalar", ["“Bolam darsga", "keldimi?”", "Javob tayyor"], v_parent, "cover_05_ota_ona.png")
+cover(8, "Taqqoslash", ["Excel’da 10 daqiqa,", "Markazly’da", "3 soniya"], v_excel, "cover_08_excel.png", True)
+cover(9, "Narx", ["Bitta tushlik", "narxiga —", "butun tizim"], v_price, "cover_09_narx.png")
+cover(10, "Savollar", ["Yangi tizimdan", "qo‘rqasizmi?", "Javob shu yerda"], v_fears, "cover_10_savollar.png", True)
 cover(7, "Umumiy", ["Hammasi", "bitta", "tizimda"], v_all, "cover_07_umumiy.png")
 cover(6, "Bepul sinov", ["Avval sinang,", "yoqsa", "keyin to‘lang"], v_trial, "cover_06_sinov.png")
 
 # profile grid preview (3:4 centre crops, newest first = 6..1)
-names = ["cover_06_sinov", "cover_05_ota_ona", "cover_04_filiallar", "cover_03_yoqotish", "cover_02_tizim", "cover_01_admin"]
+names = ["cover_10_savollar", "cover_09_narx", "cover_08_excel", "cover_07_umumiy", "cover_03_yoqotish", "cover_01_admin"]
 g = Image.new("RGB", (3 * 360 + 8, 2 * 480 + 4), "white")
 for i, n in enumerate(names):
     g.paste(Image.open(os.path.join(OUTDIR, n + "_tor.png")), ((i % 3) * 364, (i // 3) * 484))

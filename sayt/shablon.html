@@ -1,0 +1,636 @@
+<title>Markazly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Golos+Text:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: dark "doorway" page — the logo's glowing door spills mint light up from below each key section;
+   a sticky glass header, a split hero with a live product preview, then alternating product showcases. */
+:root{
+  --bg:#050E0B; --bg-2:#081610; --surface:#0E2219; --surface-2:#132C22; --line:#1D3B2F;
+  --fg:#EEF6F1; --muted:#9DB8AB; --mint:#2EE59D; --teal:#1FB5C8; --ink:#04140D;
+  --good:#46D98F; --bad:#FF7A6B;
+  --display:'Sora', 'Segoe UI', Arial, sans-serif;
+  --body:'Golos Text', 'Segoe UI', Arial, sans-serif;
+  --mono:'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --r:18px; --wrap:1180px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.6;padding-inline:20px;overflow-x:hidden}
+a{color:inherit}
+img{max-width:100%;display:block}
+h1,h2,h3{font-family:var(--display);line-height:1.12;text-wrap:balance;margin:0;letter-spacing:-.01em}
+p{margin:0}
+.wrap{max-width:var(--wrap);margin-inline:auto}
+.eyebrow{font-family:var(--mono);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--mint)}
+.muted{color:var(--muted)}
+:focus-visible{outline:2px solid var(--mint);outline-offset:3px;border-radius:8px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:10px;padding:14px 22px;border-radius:999px;font-weight:600;text-decoration:none;border:1px solid transparent;cursor:pointer;font:600 16px/1 var(--body);transition:transform .2s, box-shadow .2s, background .2s}
+.btn-primary{background:linear-gradient(135deg,var(--mint),var(--teal));color:var(--ink);box-shadow:0 10px 30px -10px rgba(46,229,157,.6)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 40px -12px rgba(46,229,157,.75)}
+.btn-ghost{border-color:var(--line);color:var(--fg);background:rgba(255,255,255,.02)}
+.btn-ghost:hover{border-color:var(--mint)}
+
+/* header */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;margin-inline:-20px;padding:14px 20px;background:rgba(5,14,11,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(29,59,47,.6)}
+.top .wrap{display:flex;align-items:center;gap:28px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand .mk{height:38px;width:auto}
+.brand .wm{height:22px;width:auto}
+nav.links{display:flex;gap:24px;margin-left:auto}
+nav.links a{text-decoration:none;color:var(--muted);font-size:15px}
+nav.links a:hover{color:var(--fg)}
+.top .btn{padding:11px 18px;font-size:15px}
+@media (max-width:860px){nav.links{display:none}.top .btn{margin-left:auto}}
+
+/* hero */
+.hero{position:relative;padding-block:72px 96px}
+.hero::before{content:"";position:absolute;inset:auto -20vw -10% -20vw;height:70%;background:radial-gradient(50% 60% at 62% 100%,rgba(46,229,157,.22),transparent 70%);pointer-events:none}
+.hero .wrap{position:relative;display:grid;grid-template-columns:1.05fr 1fr;gap:56px;align-items:center}
+.hero h1{font-size:clamp(40px,5.6vw,68px);font-weight:700;margin-top:18px}
+.hero h1 span{background:linear-gradient(120deg,var(--mint),var(--teal));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .lead{font-size:19px;color:var(--muted);margin-top:22px;max-width:34em}
+.hero .cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+.facts{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:30px;color:var(--muted);font-size:15px}
+.facts li{display:flex;align-items:center;gap:8px;list-style:none}
+.facts{padding:0}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 10px var(--mint)}
+@media (max-width:960px){.hero .wrap{grid-template-columns:1fr}.hero{padding-block:48px 72px}}
+
+/* app preview (hero) */
+.app{position:relative;min-width:0}
+.win{background:linear-gradient(180deg,var(--surface-2),var(--surface));border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:0 40px 90px -30px rgba(0,0,0,.8),0 0 0 1px rgba(46,229,157,.05)}
+.win-bar{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);font:500 13px var(--mono);color:var(--muted)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.win-bar i:first-child{background:var(--mint)}
+.win-bar span{margin-left:8px}
+.win-body{padding:20px;display:grid;gap:14px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kpi{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-width:0}
+.kpi small{display:block;color:var(--muted);font-size:13px}
+.kpi b{font:700 22px var(--display);font-variant-numeric:tabular-nums;white-space:nowrap}
+.kpi.hot{background:rgba(46,229,157,.08);border-color:rgba(46,229,157,.35)}
+.kpi.hot b{color:var(--mint)}
+.chart{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:14px}
+.chart-head{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.bars{display:flex;align-items:flex-end;gap:10px;height:120px;margin-top:12px}
+.bars div{flex:1;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,rgba(31,181,200,.55),rgba(31,181,200,.15))}
+.bars div.now{background:linear-gradient(180deg,var(--mint),rgba(46,229,157,.2))}
+.months{display:flex;gap:10px;margin-top:6px;font:500 11px var(--mono);color:var(--muted)}
+.months span{flex:1;text-align:center}
+.rows{display:grid;gap:8px}
+.row{display:flex;align-items:center;gap:10px;font-size:14px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.025)}
+.row .av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font:600 12px var(--display);background:var(--surface-2);color:var(--mint);flex:none}
+.row .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{font:500 12px var(--mono);padding:4px 9px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:rgba(70,217,143,.14);color:var(--good)}
+.pill.due{background:rgba(255,122,107,.14);color:var(--bad)}
+.toast{position:absolute;left:-28px;bottom:-26px;display:flex;align-items:center;gap:12px;background:var(--fg);color:var(--ink);padding:12px 16px;border-radius:16px;box-shadow:0 20px 50px -15px rgba(0,0,0,.7);animation:bob 5s ease-in-out infinite}
+.toast .ic{width:34px;height:34px;border-radius:10px;background:var(--mint);display:grid;place-items:center}
+.toast small{display:block;color:#3F5A4D;font-size:12px}
+.toast b{font-size:14px}
+.tag{position:absolute;right:-14px;top:-16px;background:linear-gradient(135deg,var(--mint),var(--teal));color:var(--ink);font:600 13px var(--body);padding:8px 14px;border-radius:999px;box-shadow:0 14px 30px -12px rgba(46,229,157,.7);animation:bob 6s ease-in-out infinite reverse}
+.sample{position:absolute;top:12px;right:16px;font:500 11px var(--mono);color:var(--muted)}
+@keyframes bob{50%{transform:translateY(-8px)}}
+@media (max-width:560px){.toast{left:8px;bottom:-30px}.tag{right:8px}.kpi b{font-size:18px}}
+
+/* sections */
+section.block{padding-block:96px;border-top:1px solid rgba(29,59,47,.5)}
+.sec-head{max-width:720px;margin-bottom:44px}
+.sec-head h2{font-size:clamp(30px,3.6vw,44px);font-weight:700;margin-top:12px}
+.sec-head p{color:var(--muted);margin-top:14px;font-size:18px}
+
+/* three products */
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.prod{padding:28px;border-radius:var(--r);background:var(--bg-2);border:1px solid var(--line);position:relative;overflow:hidden;min-width:0}
+.prod::after{content:"";position:absolute;inset:auto -30% -60% -30%;height:80%;background:radial-gradient(closest-side,rgba(46,229,157,.12),transparent);pointer-events:none}
+.prod .ico{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:rgba(46,229,157,.1);color:var(--mint);margin-bottom:18px}
+.prod h3{font-size:22px}
+.prod p{color:var(--muted);margin-top:10px}
+@media (max-width:860px){.trio{grid-template-columns:1fr}}
+
+/* features */
+.feat{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.feat div{background:var(--bg);padding:24px;min-width:0}
+.feat h3{font-size:17px;display:flex;align-items:center;gap:10px}
+.feat h3 svg{color:var(--mint);flex:none}
+.feat p{color:var(--muted);font-size:15px;margin-top:8px}
+@media (max-width:960px){.feat{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.feat{grid-template-columns:1fr}}
+.note{margin-top:18px;color:var(--muted);font-size:15px;display:flex;align-items:center;gap:10px}
+
+/* showcase split */
+.split{display:grid;grid-template-columns:1fr 1.15fr;gap:56px;align-items:center}
+.split.rev{grid-template-columns:1.15fr 1fr}
+.split ul{list-style:none;padding:0;margin:24px 0 0;display:grid;gap:14px}
+.split li{display:flex;gap:12px;align-items:flex-start}
+.split li svg{color:var(--mint);flex:none;margin-top:4px}
+@media (max-width:960px){.split,.split.rev{grid-template-columns:1fr}.split.rev .vis{order:2}}
+.vis{min-width:0}
+
+/* branches table */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--bg-2)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;min-width:520px}
+th,td{padding:14px 18px;text-align:left;border-bottom:1px solid var(--line);font-size:15px;white-space:nowrap}
+th{font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+td.num,th.num{text-align:right}
+tr:last-child td{border-bottom:none}
+tr.loss td{background:rgba(255,122,107,.06)}
+.tot td{font-weight:600}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+.tbl-cap{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line);font-family:var(--display);font-weight:600}
+.tbl-cap .pill{font-weight:500}
+
+/* phone */
+.phone{width:min(340px,100%);margin-inline:auto;background:var(--surface);border:8px solid #020806;border-radius:44px;padding:18px 18px 22px;box-shadow:0 40px 80px -30px rgba(0,0,0,.85),0 0 60px -10px rgba(46,229,157,.18)}
+.notch{width:110px;height:24px;margin:0 auto 16px;background:#020806;border-radius:999px}
+.ph-hi{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.ph-hi .av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--mint),var(--teal));display:grid;place-items:center;color:var(--ink);font:700 18px var(--display)}
+.ph-hi small{display:block;color:var(--muted);font-size:13px}
+.ph-card{background:var(--surface-2);border-radius:16px;padding:14px;margin-bottom:10px;display:flex;gap:12px;align-items:center}
+.ph-card svg{color:var(--mint);flex:none}
+.ph-card small{display:block;color:var(--muted);font-size:12px}
+.ph-card b{font-size:15px}
+.ph-card.paid{background:linear-gradient(135deg,var(--mint),var(--teal));color:var(--ink)}
+.ph-card.paid small{color:#0B3A26}.ph-card.paid svg{color:var(--ink)}
+.meter{height:8px;border-radius:99px;background:var(--line);margin-top:8px;overflow:hidden}
+.meter i{display:block;height:100%;width:92%;background:var(--mint)}
+.tg{margin-top:12px;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+
+/* pricing */
+.bill{display:inline-flex;padding:4px;border:1px solid var(--line);border-radius:999px;background:var(--bg-2);margin-bottom:28px}
+.bill button{border:0;background:transparent;color:var(--muted);font:600 15px var(--body);padding:10px 18px;border-radius:999px;cursor:pointer}
+.bill button[aria-pressed="true"]{background:var(--fg);color:var(--ink)}
+.bill em{font-style:normal;color:var(--mint);font-size:13px;margin-left:6px}
+.bill button[aria-pressed="true"] em{color:#0B6B45}
+.plans{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:stretch}
+.plan{display:flex;flex-direction:column;gap:14px;padding:26px;border-radius:var(--r);background:var(--bg-2);border:1px solid var(--line);min-width:0}
+.plan.best{background:linear-gradient(180deg,rgba(46,229,157,.12),var(--bg-2) 60%);border-color:rgba(46,229,157,.55);box-shadow:0 30px 60px -30px rgba(46,229,157,.4)}
+.plan-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.plan h3{font-size:22px}
+.badge{font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;background:var(--mint);color:var(--ink);padding:5px 9px;border-radius:999px}
+.limits{color:var(--muted);font-size:14px}
+.price{font:700 34px var(--display);font-variant-numeric:tabular-nums;white-space:nowrap}
+.price small{font:500 14px var(--body);color:var(--muted);margin-left:4px}
+.per{font-size:13px;color:var(--muted);min-height:20px}
+.plan ul{list-style:none;padding:14px 0 0;margin:0;border-top:1px solid var(--line);display:grid;gap:10px;font-size:15px}
+.plan li{display:flex;gap:10px}
+.plan li svg{color:var(--mint);flex:none;margin-top:4px}
+.plan .btn{margin-top:auto;justify-content:center}
+@media (max-width:1060px){.plans{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.plans{grid-template-columns:1fr}}
+.addon{margin-top:18px;padding:18px 22px;border:1px dashed var(--line);border-radius:var(--r);display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;color:var(--muted);font-size:15px}
+.addon b{color:var(--fg)}
+
+/* compare */
+.cmp td:not(:first-child),.cmp th:not(:first-child){text-align:center}
+.cmp .y{color:var(--mint)}
+.cmp .n{color:#4E6A5D}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;counter-reset:s}
+.step{padding:24px;border-radius:var(--r);border:1px solid var(--line);background:var(--bg-2);min-width:0}
+.step::before{counter-increment:s;content:counter(s);display:grid;place-items:center;width:38px;height:38px;border-radius:50%;border:1px solid rgba(46,229,157,.5);color:var(--mint);font:600 16px var(--display);margin-bottom:16px}
+.step h3{font-size:19px}
+.step p{color:var(--muted);font-size:15px;margin-top:8px}
+@media (max-width:960px){.steps{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.steps{grid-template-columns:1fr}}
+
+/* faq */
+.faq{display:grid;gap:10px;max-width:860px}
+details{border:1px solid var(--line);border-radius:14px;background:var(--bg-2);padding:0 20px}
+summary{cursor:pointer;list-style:none;padding:18px 0;font-weight:600;display:flex;justify-content:space-between;gap:16px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";color:var(--mint);font:600 20px var(--display);line-height:1}
+details[open] summary::after{content:"–"}
+details p{color:var(--muted);padding-bottom:18px;max-width:65ch}
+
+/* contact */
+.contact{display:grid;grid-template-columns:1fr 1fr;gap:40px;padding:40px;border-radius:26px;background:radial-gradient(80% 120% at 0% 100%,rgba(46,229,157,.16),transparent 60%),var(--surface);border:1px solid var(--line)}
+@media (max-width:900px){.contact{grid-template-columns:1fr;padding:26px}}
+form{display:grid;gap:14px;min-width:0}
+label{font-size:14px;color:var(--muted);display:grid;gap:6px}
+input,select{font:500 16px var(--body);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:13px 14px;width:100%}
+input:focus,select:focus{outline:none;border-color:var(--mint)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:520px){.two{grid-template-columns:1fr}}
+.err{color:var(--bad);font-size:14px}
+.done{border:1px solid rgba(46,229,157,.45);background:rgba(46,229,157,.07);border-radius:14px;padding:16px;font-size:15px}
+.done pre{white-space:pre-wrap;font:500 13px var(--mono);color:var(--muted);margin:10px 0}
+.direct{display:grid;gap:14px;margin-top:26px}
+.chan{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid var(--line)}
+.chan svg{color:var(--mint);flex:none}
+.chan div{flex:1;min-width:0}
+.chan small{display:block;color:var(--muted);font-size:13px}
+.chan b{user-select:all;font-variant-numeric:tabular-nums}
+.copy{border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:10px;padding:8px 12px;font:500 13px var(--body);cursor:pointer}
+.copy:hover{border-color:var(--mint)}
+
+footer{padding-block:40px 56px;color:var(--muted);font-size:14px}
+footer .wrap{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:center;justify-content:space-between}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-check" viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M16.5 14.3c2.6.2 4.4 1.9 5 4.7"/></g></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></g></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.8 3 2.8 15 0 18M12 3c-2.8 3-2.8 15 0 18"/></g></symbol>
+  <symbol id="i-cap" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5"/></g></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></g></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="5" width="19" height="14" rx="3"/><path d="M2.5 10h19M6.5 15h4"/></g></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></g></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></g></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7.5A2.5 2.5 0 015.5 5H19v4"/><rect x="3" y="7.5" width="18" height="12" rx="2.5"/><circle cx="16.5" cy="13.5" r="1.3" fill="currentColor"/></g></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 018 0v3"/></g></symbol>
+  <symbol id="i-branch" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 21V9l6-4 6 4v12M15 21V12l6 3v6M2 21h20M7 13h4M7 17h4"/></g></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/></g></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3L3 10.5l7 2.5 2.5 7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 6.5C10 5 6.5 4.5 3 5v13c3.5-.5 7 0 9 1.5 2-1.5 5.5-2 9-1.5V5c-3.5-.5-7 0-9 1.5z"/><path d="M12 6.5v13"/></g></symbol>
+  <symbol id="i-insta" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1" fill="currentColor"/></g></symbol>
+  <symbol id="i-call" viewBox="0 0 24 24"><path d="M5 3.5h3.5l1.7 4.3-2.2 1.4a11 11 0 006.8 6.8l1.4-2.2 4.3 1.7V19a1.5 1.5 0 01-1.6 1.5C10.6 20 4 13.4 3.5 5.1A1.5 1.5 0 015 3.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+</svg>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Markazly — bosh sahifa">
+      <img class="mk" src="{{MARK}}" alt="" width="34" height="38">
+      <img class="wm" src="{{WORD}}" alt="Markazly" width="98" height="22">
+    </a>
+    <nav class="links" aria-label="Asosiy menyu">
+      <a href="#imkoniyatlar">Imkoniyatlar</a>
+      <a href="#filiallar">Filiallar</a>
+      <a href="#tariflar">Tariflar</a>
+      <a href="#savollar">Savollar</a>
+      <a href="#aloqa">Aloqa</a>
+    </nav>
+    <a class="btn btn-primary" href="#aloqa">7 kun bepul</a>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <p class="eyebrow">O‘quv markazlari uchun web tizim</p>
+      <h1>Markazingizni <span>bitta tizimdan</span> boshqaring</h1>
+      <p class="lead">O‘quvchilar, guruhlar, davomat, to‘lovlar va filiallar — bir joyda. Ustiga markazingiz nomi bilan chiroyli sayt va o‘quvchi kabineti.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="#aloqa">7 kun bepul sinab ko‘rish</a>
+        <a class="btn btn-ghost" href="#tariflar">Tariflarni ko‘rish</a>
+      </div>
+      <ul class="facts">
+        <li><span class="dot"></span>Avval sinaysiz, yoqsa to‘laysiz</li>
+        <li><span class="dot"></span>Joyiga borib o‘rgatamiz</li>
+        <li><span class="dot"></span>Telefonda ham to‘liq ishlaydi</li>
+      </ul>
+    </div>
+
+    <div class="app" aria-label="Markazly boshqaruv paneli ko‘rinishi, namuna ma’lumotlar bilan">
+      <div class="win">
+        <div class="win-bar"><i></i><i></i><i></i><span>markazingiz.uz/admin</span></div>
+        <div class="win-body">
+          <span class="sample">namuna</span>
+          <div class="kpis">
+            <div class="kpi"><small>O‘quvchilar</small><b>368</b></div>
+            <div class="kpi"><small>Oktabr tushumi</small><b>184 mln</b></div>
+            <div class="kpi hot"><small>Davomat</small><b>94%</b></div>
+          </div>
+          <div class="chart">
+            <div class="chart-head"><span>Oylik tushum, mln so‘m</span><span>2026</span></div>
+            <div class="bars" aria-hidden="true">
+              <div style="height:52%"></div><div style="height:61%"></div><div style="height:58%"></div><div style="height:72%"></div><div style="height:84%"></div><div class="now" style="height:100%"></div>
+            </div>
+            <div class="months" aria-hidden="true"><span>May</span><span>Iyn</span><span>Iyl</span><span>Avg</span><span>Sen</span><span>Okt</span></div>
+          </div>
+          <div class="rows">
+            <div class="row"><span class="av">AS</span><span class="nm">Aziza S. · B1 guruh</span><span class="pill ok">To‘langan</span></div>
+            <div class="row"><span class="av">JR</span><span class="nm">Jasur R. · IELTS</span><span class="pill due">Qarz: 590 000</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="tag">+12 yangi ariza</div>
+      <div class="toast" role="note">
+        <span class="ic"><svg width="20" height="20"><use href="#i-check"/></svg></span>
+        <div><b>To‘lov qabul qilindi</b><small>590 000 so‘m · hozirgina</small></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="mahsulot">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Bitta obunada</p>
+      <h2>Boshqalar faqat CRM beradi. Markazly — uchtasini birga</h2>
+      <p>Tizim, sayt va kabinet uchun uch joyga alohida pul to‘lash shart emas.</p>
+    </div>
+    <div class="trio">
+      <article class="prod"><div class="ico"><svg width="24" height="24"><use href="#i-grid"/></svg></div><h3>Boshqaruv tizimi</h3><p>Lidlar, o‘quvchilar, guruhlar, davomat, to‘lov va qarzdorlik, xodimlar va hisobotlar.</p></article>
+      <article class="prod"><div class="ico"><svg width="24" height="24"><use href="#i-globe"/></svg></div><h3>Sayt va landing page</h3><p>Markazingiz nomi va domeni bilan. Saytdan qoldirilgan ariza darhol tizimga tushadi.</p></article>
+      <article class="prod"><div class="ico"><svg width="24" height="24"><use href="#i-cap"/></svg></div><h3>O‘quvchi kabineti</h3><p>O‘quvchi va ota-ona dars jadvali, vazifa, davomat va to‘lov holatini o‘zi ko‘radi.</p></article>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="imkoniyatlar">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Imkoniyatlar</p>
+      <h2>Markazning kundalik ishi — daftarsiz va Excelsiz</h2>
+    </div>
+    <div class="feat">
+      <div><h3><svg width="20" height="20"><use href="#i-users"/></svg>Lidlar (CRM)</h3><p>Reklamadan kelgan har bir murojaat yoziladi va qaytib qo‘ng‘iroq eslatiladi.</p></div>
+      <div><h3><svg width="20" height="20"><use href="#i-cap"/></svg>Guruhlar</h3><p>A1 dan C2 gacha daraja, o‘qituvchi va xona bo‘yicha.</p></div>
+      <div><h3><svg width="20" height="20"><use href="#i-tick"/></svg>Davomat</h3><p>Bir bosishda, o‘qituvchi o‘z telefonidan belgilaydi.</p></div>
+      <div><h3><svg width="20" height="20"><use href="#i-wallet"/></svg>To‘lov va qarz</h3><p>Har kim o‘zi qo‘shilgan kunda to‘laydi. Qarzdorlar darhol ko‘rinadi.</p></div>
+      <div><h3><svg width="20" height="20"><use href="#i-cal"/></svg>Jadval va xonalar</h3><p>Darslar to‘qnashmaydi, bo‘sh xona oldindan ko‘rinadi.</p></div>
+      <div><h3><svg width="20" height="20"><use href="#i-card"/></svg>Xodim va maosh</h3><p>O‘qituvchilar ish haqi hisobi va har biriga alohida akkaunt.</p></div>
+      <div><h3><svg width="20" height="20"><use href="#i-chart"/></svg>Hisobotlar</h3><p>Daromad, xarajat va sof foyda — kun, oy va yil kesimida.</p></div>
+      <div><h3><svg width="20" height="20"><use href="#i-lock"/></svg>Rollar</h3><p>Direktor, administrator, o‘qituvchi, buxgalter — har kim o‘z bo‘limini ko‘radi.</p></div>
+    </div>
+    <p class="note"><svg width="20" height="20" style="color:var(--mint)"><use href="#i-phone"/></svg>Barcha modullar telefonda ham to‘liq ishlaydi. Interfeys o‘zbek, rus, ingliz va arab tillarida.</p>
+  </div>
+</section>
+
+<section class="block" id="filiallar">
+  <div class="wrap split">
+    <div>
+      <p class="eyebrow">Filiallar hisoboti</p>
+      <h2 style="font-size:clamp(30px,3.6vw,44px);margin-top:12px">Qaysi filial foydada, qaysi zararda — aniq raqamlarda</h2>
+      <ul>
+        <li><svg width="18" height="18"><use href="#i-check"/></svg><span>Har bir filialdagi o‘quvchilar soni</span></li>
+        <li><svg width="18" height="18"><use href="#i-check"/></svg><span>Tushum, xarajat va sof foyda filial bo‘yicha</span></li>
+        <li><svg width="18" height="18"><use href="#i-check"/></svg><span>Zarardagi filial darhol ajralib turadi</span></li>
+        <li><svg width="18" height="18"><use href="#i-check"/></svg><span>Oylar kesimida taqqoslash</span></li>
+      </ul>
+    </div>
+    <div class="vis">
+      <div class="tbl-wrap">
+        <div class="tbl-cap"><span>Oktabr · 3 ta filial</span><span class="pill" style="background:rgba(255,255,255,.05);color:var(--muted)">namuna</span></div>
+        <table>
+          <thead><tr><th>Filial</th><th class="num">O‘quvchi</th><th class="num">Tushum</th><th class="num">Xarajat</th><th class="num">Foyda</th></tr></thead>
+          <tbody>
+            <tr><td>Chilonzor</td><td class="num">184</td><td class="num">92,0 mln</td><td class="num">61,5 mln</td><td class="num pos">+30,5 mln</td></tr>
+            <tr><td>Yunusobod</td><td class="num">126</td><td class="num">63,0 mln</td><td class="num">48,2 mln</td><td class="num pos">+14,8 mln</td></tr>
+            <tr class="loss"><td>Sergeli <span class="pill due">zararda</span></td><td class="num">58</td><td class="num">29,0 mln</td><td class="num">34,6 mln</td><td class="num neg">−5,6 mln</td></tr>
+            <tr class="tot"><td>Jami</td><td class="num">368</td><td class="num">184,0 mln</td><td class="num">144,3 mln</td><td class="num pos">+39,7 mln</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="kabinet">
+  <div class="wrap split rev">
+    <div class="vis">
+      <div class="phone" aria-label="O‘quvchi kabineti telefon ko‘rinishi, namuna">
+        <div class="notch"></div>
+        <div class="ph-hi"><div class="av">A</div><div><small>Xush kelibsiz</small><b>Aziza Sobirova</b></div></div>
+        <div class="ph-card"><svg width="24" height="24"><use href="#i-cal"/></svg><div><small>Bugungi dars</small><b>18:00 · 3-xona</b></div></div>
+        <div class="ph-card"><svg width="24" height="24"><use href="#i-book"/></svg><div><small>Uyga vazifa</small><b>Unit 5 · 2 ta mashq</b></div></div>
+        <div class="ph-card paid"><svg width="24" height="24"><use href="#i-tick"/></svg><div><small>Keyingi to‘lov · 20-noyabr</small><b>To‘langan</b></div></div>
+        <div class="ph-card" style="display:block"><div style="display:flex;justify-content:space-between"><small>Shu oy davomati</small><b>92%</b></div><div class="meter"><i></i></div></div>
+        <p class="tg"><svg width="16" height="16" style="color:var(--teal)"><use href="#i-send"/></svg>Eslatmalar Telegram orqali keladi</p>
+      </div>
+    </div>
+    <div>
+      <p class="eyebrow">O‘quvchi kabineti</p>
+      <h2 style="font-size:clamp(30px,3.6vw,44px);margin-top:12px">Ota-ona hammasini telefonidan ko‘radi</h2>
+      <p class="muted" style="margin-top:14px;font-size:18px">Administrator har kuni o‘nlab “dars qachon?”, “qancha to‘lashim kerak?” degan savolga javob berishdan qutuladi.</p>
+      <ul>
+        <li><svg width="18" height="18"><use href="#i-check"/></svg><span>Dars jadvali va o‘tilgan mavzular</span></li>
+        <li><svg width="18" height="18"><use href="#i-check"/></svg><span>Uyga vazifa va dars materiallari</span></li>
+        <li><svg width="18" height="18"><use href="#i-check"/></svg><span>To‘lov holati va keyingi to‘lov sanasi</span></li>
+        <li><svg width="18" height="18"><use href="#i-check"/></svg><span>Markazning o‘z Telegram boti orqali eslatmalar</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="tariflar">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Tariflar</p>
+      <h2>Narx faol o‘quvchilar soniga qarab</h2>
+      <p>Lidlar soni cheklanmaydi. Har bir tarifda 7 kun bepul sinov va joyiga borib o‘rgatish bor.</p>
+    </div>
+    <div class="bill" role="group" aria-label="To‘lov davri">
+      <button type="button" id="bill-m" aria-pressed="true">Oylik</button>
+      <button type="button" id="bill-y" aria-pressed="false">Yillik <em>2 oy sovg‘a</em></button>
+    </div>
+    <div class="plans">
+      <article class="plan">
+        <div class="plan-top"><h3>Start</h3></div>
+        <p class="limits">100 tagacha o‘quvchi · 3 tagacha o‘qituvchi</p>
+        <p class="price" data-m="290000">290 000<small>so‘m / oy</small></p>
+        <p class="per"></p>
+        <ul>
+          <li><svg width="16" height="16"><use href="#i-check"/></svg>Boshqaruv tizimi (CRM)</li>
+          <li><svg width="16" height="16"><use href="#i-check"/></svg>Davomat, to‘lov va qarzdorlik</li>
+          <li><svg width="16" height="16"><use href="#i-check"/></svg>Tayyor landing page</li>
+          <li><svg width="16" height="16"><use href="#i-check"/></svg>Joyiga borib tushuntirish</li>
+        </ul>
+        <a class="btn btn-ghost" href="#aloqa" data-plan="Start">Sinab ko‘rish</a>
+      </article>
+      <article class="plan best">
+        <div class="plan-top"><h3>Standart</h3><span class="badge">Tavsiya</span></div>
+        <p class="limits">101–300 o‘quvchi · 10 tagacha o‘qituvchi</p>
+        <p class="price" data-m="590000">590 000<small>so‘m / oy</small></p>
+        <p class="per"></p>
+        <ul>
+          <li><svg width="16" height="16"><use href="#i-check"/></svg>Start’dagi hammasi</li>
+          <li><svg width="16" height="16"><use href="#i-check"/></svg>O‘quvchi kabineti</li>
+          <li><svg width="16" height="16"><use href="#i-check"/></svg>Telegram eslatmalar</li>
+          <li><svg width="16" height="16"><use href="#i-check"/></svg>O‘z domenida sayt</li>
+        </ul>
+        <a class="btn btn-primary" href="#aloqa" data-plan="Standart">Sinab ko‘rish</a>
+      </article>
+      <article class="plan">
+        <div class="plan-top"><h3>Biznes</h3></div>
+        <p class="limits">301–700 o‘quvchi · 25 tagacha o‘qituvchi</p>
+        <p class="price" data-m="990000">990 000<small>so‘m / oy</small></p>
+        <p class="per"></p>
+        <ul>
+          <li><svg width="16" height="16"><use href="#i-check"/></svg>Standart’dagi hammasi</li>
+          <li><svg width="16" height="16"><use href="#i-check"/></svg>To‘liq veb-sayt</li>
+          <li><svg width="16" height="16"><use href="#i-check"/></svg>2 ta filial va filiallar hisoboti</li>
+          <li><svg width="16" height="16"><use href="#i-check"/></svg>Texnik support</li>
+          <li><svg width="16" height="16"><use href="#i-check"/></svg>Qo‘shimcha funksiyalar</li>
+        </ul>
+        <a class="btn btn-ghost" href="#aloqa" data-plan="Biznes">Sinab ko‘rish</a>
+      </article>
+      <article class="plan">
+        <div class="plan-top"><h3>Premium</h3></div>
+        <p class="limits">700+ o‘quvchi · cheksiz o‘qituvchi</p>
+        <p class="price" data-m="1690000" data-from="1">1 690 000<small>so‘m / oydan</small></p>
+        <p class="per"></p>
+        <ul>
+          <li><svg width="16" height="16"><use href="#i-check"/></svg>Biznes’dagi hammasi</li>
+          <li><svg width="16" height="16"><use href="#i-check"/></svg>Cheksiz filial</li>
+          <li><svg width="16" height="16"><use href="#i-check"/></svg>O‘z brendingiz</li>
+          <li><svg width="16" height="16"><use href="#i-check"/></svg>Shaxsiy menejer</li>
+        </ul>
+        <a class="btn btn-ghost" href="#aloqa" data-plan="Premium">Bog‘lanish</a>
+      </article>
+    </div>
+    <div class="addon"><b>Gamifikatsiya</b> — qo‘shimcha modul: ballar, reyting va sovg‘alar. Istalgan tarifga ulanadi. <span>· To‘lov 2 oylik oldindan olinadi.</span></div>
+  </div>
+</section>
+
+<section class="block" id="taqqoslash">
+  <div class="wrap">
+    <div class="sec-head"><p class="eyebrow">Taqqoslash</p><h2>Tariflar yonma-yon</h2></div>
+    <div class="tbl-wrap">
+      <table class="cmp">
+        <thead><tr><th>Imkoniyat</th><th>Start</th><th>Standart</th><th>Biznes</th><th>Premium</th></tr></thead>
+        <tbody>
+          <tr><td>Faol o‘quvchilar</td><td>100 gacha</td><td>101–300</td><td>301–700</td><td>700+</td></tr>
+          <tr><td>O‘qituvchi akkauntlari</td><td>3</td><td>10</td><td>25</td><td>Cheksiz</td></tr>
+          <tr><td>Boshqaruv tizimi (CRM)</td><td class="y">Bor</td><td class="y">Bor</td><td class="y">Bor</td><td class="y">Bor</td></tr>
+          <tr><td>Sayt</td><td>Landing</td><td>Sayt + domen</td><td>To‘liq sayt</td><td>To‘liq sayt</td></tr>
+          <tr><td>O‘quvchi kabineti + Telegram</td><td class="n">Yo‘q</td><td class="y">Bor</td><td class="y">Bor</td><td class="y">Bor</td></tr>
+          <tr><td>Xodimlar va ish haqi</td><td class="n">Yo‘q</td><td class="n">Yo‘q</td><td class="y">Bor</td><td class="y">Bor</td></tr>
+          <tr><td>Filiallar</td><td>1</td><td>1</td><td>2 + hisobot</td><td>Cheksiz + hisobot</td></tr>
+          <tr><td>Joyiga borib tushuntirish</td><td>1 marta</td><td>1 marta</td><td>1 marta</td><td>1 marta</td></tr>
+          <tr><td>Texnik support</td><td class="n">Yo‘q</td><td class="n">Yo‘q</td><td class="y">Bor</td><td class="y">Bor</td></tr>
+          <tr><td>Qo‘shimcha funksiya qo‘shish</td><td class="n">Yo‘q</td><td class="n">Yo‘q</td><td class="y">Bor</td><td class="y">Bor</td></tr>
+          <tr><td>O‘z brendi, shaxsiy menejer</td><td class="n">Yo‘q</td><td class="n">Yo‘q</td><td class="n">Yo‘q</td><td class="y">Bor</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="boshlash">
+  <div class="wrap">
+    <div class="sec-head"><p class="eyebrow">Qanday boshlanadi</p><h2>Avval sinaysiz, yoqsa — keyin to‘lov</h2></div>
+    <div class="steps">
+      <div class="step"><h3>Tanishuv</h3><p>Markazingizga kelib, tizimni jonli ko‘rsatamiz.</p></div>
+      <div class="step"><h3>7 kun bepul sinov</h3><p>Tizimni ishlatib ko‘rasiz. Xohlasangiz ma’lumotlaringizni o‘zimiz yuklaymiz.</p></div>
+      <div class="step"><h3>Tarif tanlash</h3><p>Yoqsa, mos tarifni tanlaysiz va 2 oylik to‘lov qilasiz.</p></div>
+      <div class="step"><h3>Ishga tushirish</h3><p>Sayt, domen, bot va kabinetni ulaymiz, xodimlarga joyida o‘rgatamiz.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="savollar">
+  <div class="wrap">
+    <div class="sec-head"><p class="eyebrow">Savollar</p><h2>Ko‘p so‘raladigan savollar</h2></div>
+    <div class="faq">
+      <details><summary>Hozirgi ma’lumotlarimni ko‘chirib berasizmi?</summary><p>Ha. Excel, daftar yoki boshqa dasturdagi o‘quvchilar, guruhlar va to‘lovlarni o‘zimiz tizimga yuklab beramiz.</p></details>
+      <details><summary>Boshqa markazlar mening ma’lumotlarimni ko‘ra oladimi?</summary><p>Yo‘q. Har bir markazning bazasi, domeni va Telegram boti alohida. Bir markaz boshqasining ma’lumotini ko‘rmaydi.</p></details>
+      <details><summary>O‘z domenim va saytim bo‘ladimi?</summary><p>Ha. Sayt markazingiz nomi, logotipi va ranglari bilan, o‘z domeningizda ishlaydi. Boshqaruv tizimi va kabinet ham shu domen ostida bo‘ladi.</p></details>
+      <details><summary>Telefondan ishlasa bo‘ladimi?</summary><p>Ha. Barcha modullar — o‘quvchi qo‘shish, davomat, to‘lov, hisobot — telefonda ham to‘liq ishlaydi.</p></details>
+      <details><summary>O‘quvchilar soni oshib ketsa nima bo‘ladi?</summary><p>Tarif limitidan oshsa, keyingi tarifga o‘tasiz. Ma’lumotlaringiz o‘z joyida qoladi.</p></details>
+      <details><summary>To‘lov qanday qilinadi?</summary><p>7 kunlik sinovdan keyin, tizim yoqsa, 2 oylik to‘lov oldindan qilinadi. Yillik to‘lovda 2 oy sovg‘a: 10 oy to‘laysiz, 12 oy ishlatasiz.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="aloqa">
+  <div class="wrap contact">
+    <div>
+      <p class="eyebrow">Bepul sinov</p>
+      <h2 style="font-size:clamp(28px,3.4vw,40px);margin-top:12px">7 kunlik bepul sinovga ariza qoldiring</h2>
+      <p class="muted" style="margin-top:14px">Biz bog‘lanamiz, markazingizga kelib tizimni ko‘rsatamiz.</p>
+      <div class="direct">
+        <div class="chan"><svg width="22" height="22"><use href="#i-call"/></svg><div><small>Telefon</small><b id="ph">+998 50 999 97 33</b></div><button class="copy" type="button" data-copy="+998509999733">Nusxa</button></div>
+        <div class="chan"><svg width="22" height="22"><use href="#i-send"/></svg><div><small>Telegram</small><b><a href="https://t.me/abdulloh_mrktlg" target="_blank" rel="noopener">@abdulloh_mrktlg</a></b></div></div>
+        <div class="chan"><svg width="22" height="22"><use href="#i-insta"/></svg><div><small>Instagram</small><b><a href="https://instagram.com/markazly_uz" target="_blank" rel="noopener">@markazly_uz</a></b></div></div>
+      </div>
+    </div>
+    <div>
+      <form id="lead" novalidate>
+        <div class="two">
+          <label for="f-name">Ismingiz<input id="f-name" name="name" autocomplete="name" placeholder="Masalan: Dilshod"></label>
+          <label for="f-phone">Telefon<input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+998 __ ___ __ __"></label>
+        </div>
+        <label for="f-center">Markaz nomi<input id="f-center" name="center" placeholder="Masalan: Nur o‘quv markazi"></label>
+        <div class="two">
+          <label for="f-size">O‘quvchilar soni<select id="f-size" name="size"><option>100 gacha</option><option>101–300</option><option>301–700</option><option>700 dan ko‘p</option></select></label>
+          <label for="f-plan">Qiziqqan tarif<select id="f-plan" name="plan"><option>Start</option><option selected>Standart</option><option>Biznes</option><option>Premium</option></select></label>
+        </div>
+        <p class="err" id="f-err" hidden></p>
+        <button class="btn btn-primary" type="submit" style="justify-content:center">Arizani tayyorlash</button>
+        <div class="done" id="f-done" hidden>
+          <b>Ariza tayyor.</b> Uni Telegram orqali yuboring yoki yuqoridagi raqamga qo‘ng‘iroq qiling.
+          <pre id="f-text"></pre>
+          <div style="display:flex;flex-wrap:wrap;gap:10px">
+            <a class="btn btn-primary" id="f-tg" href="https://t.me/abdulloh_mrktlg" target="_blank" rel="noopener">Telegramda ochish</a>
+            <button class="copy" type="button" id="f-copy">Matndan nusxa olish</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Markazly"><img class="mk" src="{{MARK}}" alt="" width="34" height="38" style="height:32px"><img class="wm" src="{{WORD}}" alt="Markazly" width="98" height="22" style="height:18px"></a>
+    <span>O‘quv markazlari uchun web tizim · markazly.uz</span>
+    <span>© 2026 Markazly</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  // billing toggle: yearly = 10 months paid for 12 months of use
+  var fmt=function(n){return n.toLocaleString('ru-RU').replace(/ /g,' ');};
+  var bm=document.getElementById('bill-m'), by=document.getElementById('bill-y');
+  function setBill(yearly){
+    bm.setAttribute('aria-pressed',!yearly); by.setAttribute('aria-pressed',yearly);
+    document.querySelectorAll('.price').forEach(function(p){
+      var m=+p.dataset.m, from=p.dataset.from?'dan':'';
+      var per=p.nextElementSibling;
+      if(yearly){
+        p.innerHTML=fmt(m*10)+'<small>so‘m / yil'+from+'</small>';
+        per.textContent='Oyiga '+fmt(Math.round(m*10/12))+' so‘m chiqadi · 2 oy bepul';
+      }else{
+        p.innerHTML=fmt(m)+'<small>so‘m / oy'+from+'</small>';
+        per.textContent='';
+      }
+    });
+  }
+  bm.addEventListener('click',function(){setBill(false)});
+  by.addEventListener('click',function(){setBill(true)});
+
+  // plan buttons preselect the plan in the form
+  document.querySelectorAll('[data-plan]').forEach(function(a){
+    a.addEventListener('click',function(){document.getElementById('f-plan').value=a.dataset.plan;});
+  });
+
+  function copyText(t,btn){
+    var ok=function(){var o=btn.textContent;btn.textContent='Nusxa olindi';setTimeout(function(){btn.textContent=o},1600)};
+    try{navigator.clipboard.writeText(t).then(ok,function(){sel(btn)});}catch(e){sel(btn)}
+  }
+  function sel(btn){var el=btn.parentElement.querySelector('b,pre');if(!el)return;var r=document.createRange();r.selectNodeContents(el);var s=getSelection();s.removeAllRanges();s.addRange(r);}
+  document.querySelectorAll('[data-copy]').forEach(function(b){b.addEventListener('click',function(){copyText(b.dataset.copy,b)})});
+
+  // lead form: no backend here — build the message for Telegram / phone
+  var form=document.getElementById('lead'), err=document.getElementById('f-err'), done=document.getElementById('f-done');
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    var v=function(id){return document.getElementById(id).value.trim()};
+    var digits=v('f-phone').replace(/\D/g,'');
+    var miss=[];
+    if(!v('f-name'))miss.push('ismingizni');
+    if(digits.length<9)miss.push('telefon raqamingizni');
+    if(!v('f-center'))miss.push('markaz nomini');
+    if(miss.length){err.textContent='Iltimos, '+miss.join(', ')+' kiriting.';err.hidden=false;done.hidden=true;return;}
+    err.hidden=true;
+    var text='Markazly — 7 kunlik bepul sinov\nIsm: '+v('f-name')+'\nTelefon: '+v('f-phone')+'\nMarkaz: '+v('f-center')+'\nO‘quvchilar: '+v('f-size')+'\nTarif: '+v('f-plan');
+    document.getElementById('f-text').textContent=text;
+    document.getElementById('f-tg').href='https://t.me/share/url?url='+encodeURIComponent('https://markazly.uz')+'&text='+encodeURIComponent(text);
+    done.hidden=false;
+  });
+  document.getElementById('f-copy').addEventListener('click',function(){copyText(document.getElementById('f-text').textContent,this)});
+})();
+</script>

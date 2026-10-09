@@ -1,0 +1,12 @@
+{
+  "name": "markazly",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Markazly sayti. Render Root Directory bo'sh qolsa ham shu fayl orqali ishga tushadi.",
+  "scripts": {
+    "start": "node sayt/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

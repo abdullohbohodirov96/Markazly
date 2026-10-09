@@ -229,6 +229,118 @@ input:focus,select:focus{outline:none;border-color:var(--mint)}
 .copy{border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:10px;padding:8px 12px;font:500 13px var(--body);cursor:pointer}
 .copy:hover{border-color:var(--mint)}
 
+/* centre-site showcase */
+.site-demo{position:relative;border-radius:24px;border:1px solid var(--line);background:#071510;overflow:hidden;box-shadow:0 50px 100px -40px rgba(0,0,0,.9),0 0 80px -30px rgba(46,229,157,.35)}
+.sd-bar{display:flex;align-items:center;gap:8px;padding:12px 16px;background:#0B1D16;border-bottom:1px solid var(--line)}
+.sd-bar i{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.sd-bar i:first-child{background:var(--mint)}
+.sd-url{margin-left:10px;flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:#06120D;border:1px solid var(--line);border-radius:999px;padding:6px 14px;font:500 13px var(--mono);color:var(--muted);white-space:nowrap;overflow:hidden}
+.sd-url b{color:var(--fg);font-weight:500}
+.sd-nav{display:flex;align-items:center;gap:18px;padding:16px 24px;font-size:14px;color:var(--muted)}
+.sd-logo{display:flex;align-items:center;gap:10px;color:var(--fg);font:700 16px var(--display);margin-right:auto}
+.sd-logo span{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#F6C76B,#E8873D);display:grid;place-items:center;color:#2A1400;font:800 15px var(--display)}
+.sd-nav .go{background:var(--fg);color:var(--ink);padding:8px 14px;border-radius:999px;font-weight:600}
+.sd-hero{position:relative;display:grid;grid-template-columns:1.2fr .8fr;gap:20px;padding:26px 24px 30px;align-items:center}
+.sd-hero::before{content:"";position:absolute;inset:0;background:radial-gradient(60% 80% at 85% 60%,rgba(246,199,107,.16),transparent 70%);pointer-events:none}
+.sd-hero small{display:inline-block;font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#F6C76B;background:rgba(246,199,107,.1);padding:5px 10px;border-radius:999px}
+.sd-hero h3{font-size:clamp(22px,2.6vw,32px);margin-top:12px;line-height:1.15}
+.sd-hero p{color:var(--muted);font-size:14px;margin-top:10px}
+.sd-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.sd-btns a{font:600 13px var(--body);padding:10px 14px;border-radius:999px;text-decoration:none}
+.sd-btns .p{background:linear-gradient(135deg,#F6C76B,#E8873D);color:#2A1400}
+.sd-btns .g{border:1px solid var(--line);color:var(--fg)}
+.sd-art{position:relative;aspect-ratio:1;max-width:100%;border-radius:22px;background:radial-gradient(circle at 30% 30%,#203F33,#0D221A);display:grid;place-items:center;border:1px solid var(--line)}
+.sd-art svg{width:46%;height:46%;color:#F6C76B}
+.sd-art em{position:absolute;bottom:-10px;left:-12px;font:600 12px var(--body);font-style:normal;background:var(--fg);color:var(--ink);padding:8px 12px;border-radius:12px;box-shadow:0 12px 30px -10px rgba(0,0,0,.7)}
+.sd-courses{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 24px 24px}
+.sd-c{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:12px;min-width:0}
+.sd-c b{display:block;font-size:14px}
+.sd-c small{color:var(--muted);font-size:12px}
+.sd-c i{display:block;height:4px;border-radius:9px;margin-bottom:10px;background:linear-gradient(90deg,#F6C76B,#E8873D)}
+.sd-c:nth-child(2) i{background:linear-gradient(90deg,var(--mint),var(--teal))}
+.sd-c:nth-child(3) i{background:linear-gradient(90deg,#9B8CFF,#5B7CFF)}
+.sd-form{margin:0 24px 24px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px;border-radius:14px;background:rgba(246,199,107,.07);border:1px dashed rgba(246,199,107,.35);font-size:13px;color:var(--muted)}
+.sd-form span{flex:1;min-width:140px;background:#06120D;border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+.sd-form b{background:#F6C76B;color:#2A1400;border-radius:10px;padding:9px 14px;font-size:13px}
+.flow{display:flex;align-items:center;gap:10px;margin-top:22px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.flow span{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:var(--bg-2)}
+.flow span.on{border-color:rgba(46,229,157,.5);color:var(--mint)}
+@media (max-width:560px){.sd-hero{grid-template-columns:1fr}.sd-art{max-width:200px}.sd-courses{grid-template-columns:1fr}.sd-nav a:not(.go){display:none}}
+
+/* student cabinet */
+.kab{display:grid;grid-template-columns:auto 1fr;gap:40px;align-items:start}
+@media (max-width:960px){.kab{grid-template-columns:1fr}}
+.kab .phone{width:340px;max-width:100%}
+.ph-tabs{display:flex;justify-content:space-around;margin-top:12px;padding:12px;border-radius:18px;background:#07150F;color:#5F7D70}
+.ph-tabs .on{color:var(--mint)}
+.kab-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;min-width:0}
+@media (max-width:620px){.kab-grid{grid-template-columns:1fr}}
+.kc{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r);padding:22px;min-width:0}
+.kc-wide{grid-column:1/-1;background:radial-gradient(80% 120% at 100% 0%,rgba(46,229,157,.1),transparent 60%),var(--bg-2)}
+.kc h3{font-size:18px;display:flex;align-items:center;gap:10px}
+.kc h3 svg{color:var(--mint);flex:none}
+.kc>p{color:var(--muted);font-size:15px;margin-top:8px}
+.mini{display:grid;gap:8px;margin-top:14px}
+.mrow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.03);font-size:14px;min-width:0}
+.mrow b{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow em{font-style:normal;color:var(--muted);font:500 12px var(--mono);white-space:nowrap}
+.tag2{font:500 12px var(--mono);color:var(--mint);background:rgba(46,229,157,.1);padding:3px 8px;border-radius:8px;white-space:nowrap}
+.flash{display:grid;grid-template-columns:1.4fr 1fr;gap:12px;margin-top:16px;align-items:stretch}
+@media (max-width:620px){.flash{grid-template-columns:1fr}}
+.fcard{grid-row:span 2;border-radius:16px;padding:18px;background:linear-gradient(135deg,#123A2C,#0B2219);border:1px solid rgba(46,229,157,.35);display:flex;flex-direction:column;gap:6px;min-width:0}
+.fcard small{font:500 12px var(--mono);color:var(--muted)}
+.fcard b{font:700 30px var(--display);color:var(--fg)}
+.fcard span{color:var(--muted);font-size:14px}
+.fbtn{display:flex;gap:8px}
+.fbtn span{flex:1;text-align:center;padding:12px 8px;border-radius:12px;font-weight:600;font-size:14px}
+.fbtn .r{border:1px solid var(--line)}
+.fbtn .k{background:linear-gradient(135deg,var(--mint),var(--teal));color:var(--ink)}
+.fprog{align-self:end;height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.fprog i{display:block;height:100%;background:var(--mint)}
+.cal{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:14px}
+.cal i{aspect-ratio:1;border-radius:8px;background:rgba(255,255,255,.04)}
+.cal i.y{background:rgba(70,217,143,.55)}
+.cal i.l{background:rgba(246,199,107,.6)}
+.cal i.n{background:rgba(255,122,107,.6)}
+.legend{display:flex;gap:14px;margin-top:10px;font-size:12px;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:3px;margin-right:6px;vertical-align:middle}
+.legend .y::before{background:rgba(70,217,143,.8)}.legend .l::before{background:#F6C76B}.legend .n::before{background:var(--bad)}
+
+/* gamification */
+.gam{display:grid;grid-template-columns:1.1fr .9fr;gap:20px}
+@media (max-width:960px){.gam{grid-template-columns:1fr}}
+.gcard{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r);padding:24px;min-width:0}
+.gcard h3{font-size:18px;display:flex;align-items:center;gap:10px}
+.gcard h3 svg{color:var(--mint)}
+.rules{width:100%;min-width:0;margin-top:14px}
+.rules td{white-space:normal;padding:11px 0;font-size:15px}
+.rules td:last-child{text-align:right;font:600 15px var(--mono);color:var(--mint);white-space:nowrap;padding-left:12px}
+.rules td.minus{color:var(--bad)}
+.lvl{margin-top:16px}
+.lvl-top{display:flex;justify-content:space-between;font-size:14px;color:var(--muted)}
+.lvl-top b{color:var(--fg);font-family:var(--display)}
+.lvl-bar{height:12px;border-radius:99px;background:var(--line);margin-top:8px;overflow:hidden}
+.lvl-bar i{display:block;height:100%;width:64%;border-radius:99px;background:linear-gradient(90deg,var(--mint),var(--teal))}
+.steps-lvl{display:flex;justify-content:space-between;margin-top:10px;font:500 11px var(--mono);color:var(--muted);gap:4px;flex-wrap:wrap}
+.rank{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:8px}
+.rank li{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.025);font-size:15px}
+.rank li.me{background:rgba(46,229,157,.09);border:1px solid rgba(46,229,157,.35)}
+.rank .n{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font:700 13px var(--display);background:var(--surface-2)}
+.rank li:nth-child(1) .n{background:#F6C76B;color:#2A1400}
+.rank li:nth-child(2) .n{background:#C9D6D0;color:var(--ink)}
+.rank li:nth-child(3) .n{background:#D9946B;color:#2A1400}
+.rank .nm{flex:1;min-width:0}
+.rank b{font:600 14px var(--mono);color:var(--mint)}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.badges span{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:14px}
+.badges span::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--mint)}
+.shop{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}
+@media (max-width:860px){.shop{grid-template-columns:repeat(2,1fr)}}
+.shop div{background:var(--bg-2);border:1px solid var(--line);border-radius:16px;padding:16px;min-width:0}
+.shop b{display:block;font-size:15px}
+.shop small{display:block;margin-top:6px;font:600 13px var(--mono);color:var(--mint)}
+.addon-tag{display:inline-block;font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:var(--mint);padding:5px 10px;border-radius:999px;margin-left:10px;vertical-align:middle}
+
 footer{padding-block:40px 56px;color:var(--muted);font-size:14px}
 footer .wrap{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:center;justify-content:space-between}
 
@@ -263,7 +375,9 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:center;justif
     </a>
     <nav class="links" aria-label="Asosiy menyu">
       <a href="#imkoniyatlar">Imkoniyatlar</a>
-      <a href="#filiallar">Filiallar</a>
+      <a href="#markaz-sayti">Sayt</a>
+      <a href="#kabinet">Kabinet</a>
+      <a href="#gamifikatsiya">Gamifikatsiya</a>
       <a href="#tariflar">Tariflar</a>
       <a href="#savollar">Savollar</a>
       <a href="#aloqa">Aloqa</a>
@@ -386,29 +500,155 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:center;justif
   </div>
 </section>
 
-<section class="block" id="kabinet">
-  <div class="wrap split rev">
+<section class="block" id="markaz-sayti">
+  <div class="wrap split">
+    <div>
+      <p class="eyebrow">Markazingiz sayti</p>
+      <h2 style="font-size:clamp(30px,3.6vw,44px);margin-top:12px">Har bir markazga o‘z sayti — o‘z domenida</h2>
+      <p class="muted" style="margin-top:14px;font-size:18px">Nomingiz, logotipingiz va ranglaringiz bilan. Reklamadan kelgan odam ishonchli sahifani ko‘radi va shu yerning o‘zida ariza qoldiradi.</p>
+      <ul>
+        <li><svg width="18" height="18"><use href="#i-check"/></svg><span>Kurslar, ustozlar, natijalar va narxlar sahifalari</span></li>
+        <li><svg width="18" height="18"><use href="#i-check"/></svg><span>Ariza formasi — ariza darhol tizimdagi lidlarga tushadi</span></li>
+        <li><svg width="18" height="18"><use href="#i-check"/></svg><span>Reklama uchun alohida landing page</span></li>
+        <li><svg width="18" height="18"><use href="#i-check"/></svg><span>Telefonda tez ochiladi, o‘zbek va rus tilida</span></li>
+      </ul>
+      <div class="flow" aria-label="Ariza yo‘li"><span>Reklama</span>→<span>Sayt</span>→<span class="on">Ariza tizimda</span>→<span>Qo‘ng‘iroq</span></div>
+    </div>
     <div class="vis">
-      <div class="phone" aria-label="O‘quvchi kabineti telefon ko‘rinishi, namuna">
+      <div class="site-demo" aria-label="Markaz sayti namunasi">
+        <div class="sd-bar"><i></i><i></i><i></i><div class="sd-url"><svg width="13" height="13"><use href="#i-lock"/></svg><b>nuracademy.uz</b></div></div>
+        <div class="sd-nav"><div class="sd-logo"><span>N</span>Nur Academy</div><a>Kurslar</a><a>Ustozlar</a><a>Natijalar</a><a class="go">Ariza</a></div>
+        <div class="sd-hero">
+          <div>
+            <small>Yangi guruhlar ochildi</small>
+            <h3>Ingliz tilida birinchi darsdan gapiring</h3>
+            <p>Kichik guruhlar, tajribali ustozlar va bepul sinov darsi.</p>
+            <div class="sd-btns"><a class="p">Bepul darsga yozilish</a><a class="g">Kurslar</a></div>
+          </div>
+          <div class="sd-art"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5"/></svg><em>Bepul sinov darsi</em></div>
+        </div>
+        <div class="sd-courses">
+          <div class="sd-c"><i></i><b>General English</b><small>A1 — C1 darajalar</small></div>
+          <div class="sd-c"><i></i><b>IELTS</b><small>Mock test har hafta</small></div>
+          <div class="sd-c"><i></i><b>Bolalar uchun</b><small>7–12 yosh</small></div>
+        </div>
+        <div class="sd-form"><span>Ismingiz</span><span>+998 __ ___ __ __</span><b>Yuborish</b></div>
+      </div>
+      <p class="muted" style="font-size:13px;margin-top:10px;text-align:right">Namuna: o‘ylab topilgan markaz</p>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="kabinet">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">O‘quvchi kabineti</p>
+      <h2>Darslar, vazifalar va lug‘at — o‘quvchining telefonida</h2>
+      <p>O‘quvchi va ota-ona Telegram orqali kelgan kod bilan kiradi. Parol eslab qolish shart emas.</p>
+    </div>
+    <div class="kab">
+      <div class="phone" aria-label="O‘quvchi kabineti bosh sahifasi, namuna">
         <div class="notch"></div>
-        <div class="ph-hi"><div class="av">A</div><div><small>Xush kelibsiz</small><b>Aziza Sobirova</b></div></div>
-        <div class="ph-card"><svg width="24" height="24"><use href="#i-cal"/></svg><div><small>Bugungi dars</small><b>18:00 · 3-xona</b></div></div>
-        <div class="ph-card"><svg width="24" height="24"><use href="#i-book"/></svg><div><small>Uyga vazifa</small><b>Unit 5 · 2 ta mashq</b></div></div>
+        <div class="ph-hi"><div class="av">A</div><div><small>Xush kelibsiz · B1 guruh</small><b>Aziza Sobirova</b></div></div>
+        <div class="ph-card"><svg width="24" height="24"><use href="#i-cal"/></svg><div><small>Bugungi dars · 3-xona</small><b>18:00 · Present Perfect</b></div></div>
+        <div class="ph-card"><svg width="24" height="24"><use href="#i-book"/></svg><div><small>Uyga vazifa · ertagacha</small><b>Unit 5 · 2 ta mashq</b></div></div>
+        <div class="ph-card"><svg width="24" height="24"><use href="#i-cap"/></svg><div><small>Lug‘at · bugun</small><b>12 ta yangi so‘z</b></div></div>
         <div class="ph-card paid"><svg width="24" height="24"><use href="#i-tick"/></svg><div><small>Keyingi to‘lov · 20-noyabr</small><b>To‘langan</b></div></div>
-        <div class="ph-card" style="display:block"><div style="display:flex;justify-content:space-between"><small>Shu oy davomati</small><b>92%</b></div><div class="meter"><i></i></div></div>
-        <p class="tg"><svg width="16" height="16" style="color:var(--teal)"><use href="#i-send"/></svg>Eslatmalar Telegram orqali keladi</p>
+        <div class="ph-tabs" aria-hidden="true"><svg width="22" height="22" class="on"><use href="#i-grid"/></svg><svg width="22" height="22"><use href="#i-book"/></svg><svg width="22" height="22"><use href="#i-cap"/></svg><svg width="22" height="22"><use href="#i-wallet"/></svg><svg width="22" height="22"><use href="#i-users"/></svg></div>
+      </div>
+
+      <div class="kab-grid">
+        <article class="kc">
+          <h3><svg width="20" height="20"><use href="#i-book"/></svg>Darslar va materiallar</h3>
+          <p>Har darsning mavzusi, ustoz izohi va materiallari: PDF, rasm, video havolasi.</p>
+          <div class="mini">
+            <div class="mrow"><span class="tag2">12-dars</span><b>Present Perfect</b><em>PDF · Video</em></div>
+            <div class="mrow"><span class="tag2">11-dars</span><b>Travel vocabulary</b><em>PDF</em></div>
+          </div>
+        </article>
+        <article class="kc">
+          <h3><svg width="20" height="20"><use href="#i-tick"/></svg>Uyga vazifa</h3>
+          <p>Vazifani rasm yoki fayl qilib topshiradi, ustoz baho va izoh qoldiradi.</p>
+          <div class="mini">
+            <div class="mrow"><b>Unit 5 · Writing</b><span class="pill due">Ertaga</span></div>
+            <div class="mrow"><b>Unit 4 · Grammar</b><span class="pill ok">92 / 100</span></div>
+          </div>
+        </article>
+        <article class="kc kc-wide">
+          <h3><svg width="20" height="20"><use href="#i-cap"/></svg>Lug‘at</h3>
+          <p>Ustoz har dars so‘zlarini qo‘shadi. O‘quvchi kartochkalar bilan takrorlaydi, tizim qaysi so‘zni qachon qaytarishni o‘zi eslab qoladi.</p>
+          <div class="flash">
+            <div class="fcard"><small>12 tadan 5-so‘z</small><b>achieve</b><span>erishmoq · I achieved my goal.</span></div>
+            <div class="fbtn"><span class="r">Takrorlash</span><span class="k">Bilaman</span></div>
+            <div class="fprog"><i style="width:42%"></i></div>
+          </div>
+        </article>
+        <article class="kc">
+          <h3><svg width="20" height="20"><use href="#i-cal"/></svg>Davomat</h3>
+          <p>Oy kalendari: keldi, kelmadi, kechikdi.</p>
+          <div class="cal" aria-label="Oktabr davomati: 11 kun keldi, 1 kun kechikdi, 1 kun kelmadi">
+            <i class="y"></i><i class="y"></i><i class="y"></i><i class="l"></i><i class="y"></i><i class="y"></i><i class="n"></i><i class="y"></i><i class="y"></i><i class="y"></i><i class="y"></i><i class="y"></i><i class="y"></i><i></i><i></i>
+          </div>
+          <p class="legend"><span class="y">keldi</span><span class="l">kechikdi</span><span class="n">kelmadi</span></p>
+        </article>
+        <article class="kc">
+          <h3><svg width="20" height="20"><use href="#i-users"/></svg>Ota-ona akkaunti</h3>
+          <p>Bir nechta farzandni bitta akkauntdan kuzatadi. Darsga kelmasa — Telegram’ga xabar.</p>
+          <div class="mini"><div class="mrow"><svg width="18" height="18" style="color:var(--teal)"><use href="#i-send"/></svg><span>Aziza darsga keldi · 18:02</span></div></div>
+        </article>
       </div>
     </div>
-    <div>
-      <p class="eyebrow">O‘quvchi kabineti</p>
-      <h2 style="font-size:clamp(30px,3.6vw,44px);margin-top:12px">Ota-ona hammasini telefonidan ko‘radi</h2>
-      <p class="muted" style="margin-top:14px;font-size:18px">Administrator har kuni o‘nlab “dars qachon?”, “qancha to‘lashim kerak?” degan savolga javob berishdan qutuladi.</p>
-      <ul>
-        <li><svg width="18" height="18"><use href="#i-check"/></svg><span>Dars jadvali va o‘tilgan mavzular</span></li>
-        <li><svg width="18" height="18"><use href="#i-check"/></svg><span>Uyga vazifa va dars materiallari</span></li>
-        <li><svg width="18" height="18"><use href="#i-check"/></svg><span>To‘lov holati va keyingi to‘lov sanasi</span></li>
-        <li><svg width="18" height="18"><use href="#i-check"/></svg><span>Markazning o‘z Telegram boti orqali eslatmalar</span></li>
-      </ul>
+  </div>
+</section>
+
+<section class="block" id="gamifikatsiya">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Gamifikatsiya <span class="addon-tag">Qo‘shimcha modul</span></p>
+      <h2>O‘qish o‘yindek qiziqarli — o‘quvchi ketib qolmaydi</h2>
+      <p>Darsga kelgani, vazifani vaqtida topshirgani uchun ball yig‘adi, darajasi oshadi, reytingda ko‘tariladi va ballarini sovg‘aga almashtiradi.</p>
+    </div>
+    <div class="gam">
+      <div class="gcard">
+        <h3><svg width="20" height="20"><use href="#i-chart"/></svg>Ball qanday yig‘iladi</h3>
+        <table class="rules">
+          <tbody>
+            <tr><td>Darsga keldi</td><td>+10</td></tr>
+            <tr><td>Uyga vazifani muddatida topshirdi</td><td>+15</td></tr>
+            <tr><td>Vazifa bahosi 90% va yuqori</td><td>+10</td></tr>
+            <tr><td>To‘lovni muddatida qildi</td><td>+20</td></tr>
+            <tr><td>Oyda bitta ham dars qoldirmadi</td><td>+50</td></tr>
+            <tr><td>Do‘stini olib keldi</td><td>+100</td></tr>
+            <tr><td>Sababsiz kelmadi</td><td class="minus">−5</td></tr>
+          </tbody>
+        </table>
+        <p class="muted" style="font-size:13px;margin-top:10px">Har bir markaz ball qiymatlarini o‘zi sozlaydi.</p>
+      </div>
+      <div style="display:grid;gap:20px;min-width:0">
+        <div class="gcard">
+          <h3><svg width="20" height="20"><use href="#i-cap"/></svg>Daraja</h3>
+          <div class="lvl">
+            <div class="lvl-top"><span>Aziza · <b>Bilimdon</b></span><span>1 248 / 1 500</span></div>
+            <div class="lvl-bar"><i style="width:64%"></i></div>
+            <div class="steps-lvl"><span>Boshlovchi</span><span>Faol</span><span>Bilimdon</span><span>Ustoz shogirdi</span><span>Chempion</span></div>
+          </div>
+          <div class="badges"><span>Temir intizom</span><span>Vazifa ustasi</span><span>Oy yulduzi</span></div>
+        </div>
+        <div class="gcard">
+          <h3><svg width="20" height="20"><use href="#i-users"/></svg>B1 guruh reytingi · Oktabr</h3>
+          <ol class="rank">
+            <li><span class="n">1</span><span class="nm">Jasur R.</span><b>412</b></li>
+            <li class="me"><span class="n">2</span><span class="nm">Aziza S. · siz</span><b>385</b></li>
+            <li><span class="n">3</span><span class="nm">Madina K.</span><b>340</b></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+    <div class="shop" aria-label="Sovg‘alar do‘koni namunasi">
+      <div><b>Markaz daftari</b><small>300 ball</small></div>
+      <div><b>Markaz futbolkasi</b><small>1 000 ball</small></div>
+      <div><b>Bepul individual dars</b><small>1 500 ball</small></div>
+      <div><b>Oylik to‘lovga 10% chegirma</b><small>2 000 ball</small></div>
     </div>
   </div>
 </section>
@@ -479,7 +719,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:center;justif
         <a class="btn btn-ghost" href="#aloqa" data-plan="Premium">Bog‘lanish</a>
       </article>
     </div>
-    <div class="addon"><b>Gamifikatsiya</b> — qo‘shimcha modul: ballar, reyting va sovg‘alar. Istalgan tarifga ulanadi. <span>· To‘lov 2 oylik oldindan olinadi.</span></div>
+    <div class="addon"><b>Gamifikatsiya</b> — qo‘shimcha modul, istalgan tarifga ulanadi (<a href="#gamifikatsiya">batafsil</a>). <span>· To‘lov 2 oylik oldindan olinadi.</span></div>
   </div>
 </section>
 
@@ -542,7 +782,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:center;justif
       <div class="direct">
         <div class="chan"><svg width="22" height="22"><use href="#i-call"/></svg><div><small>Telefon</small><b id="ph">+998 50 999 97 33</b></div><button class="copy" type="button" data-copy="+998509999733">Nusxa</button></div>
         <div class="chan"><svg width="22" height="22"><use href="#i-send"/></svg><div><small>Telegram</small><b><a href="https://t.me/abdulloh_mrktlg" target="_blank" rel="noopener">@abdulloh_mrktlg</a></b></div></div>
-        <div class="chan"><svg width="22" height="22"><use href="#i-insta"/></svg><div><small>Instagram</small><b><a href="https://instagram.com/markazly_uz" target="_blank" rel="noopener">@markazly_uz</a></b></div></div>
+        <div class="chan"><svg width="22" height="22"><use href="#i-insta"/></svg><div><small>Instagram</small><b><a href="https://instagram.com/markazly.uz" target="_blank" rel="noopener">@markazly.uz</a></b></div></div>
       </div>
     </div>
     <div>

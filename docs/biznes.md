@@ -68,4 +68,4 @@ Markazly farqi: tizim + sayt + kabinet bitta narxda, ~40–45% arzon, joyiga bor
 
 ## Nom
 
-"Ilmora" band bo‘lgani uchun **Markazly** tanlandi. Tekshirish kerak: `markazly.uz` va `markazli.uz` domenlari, `@markazly_uz`, ima.uz tovar belgisi bazasi.
+"Ilmora" band bo‘lgani uchun **Markazly** tanlandi. Tekshirish kerak: `markazly.uz` va `markazli.uz` domenlari, `@markazly.uz`, ima.uz tovar belgisi bazasi.

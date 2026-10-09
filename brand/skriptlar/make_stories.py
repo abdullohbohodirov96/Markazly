@@ -111,7 +111,7 @@ def frame(body, eyebrow):
             + T("Markaz", 80 + 74 * 342 / 377 + 22, 270, 52, SEMI, FG)
             + T("ly", 80 + 74 * 342 / 377 + 22 + SEMI.width("Markaz", 52), 270, 52, SEMI, "url(#gh)"))
     eb = T(eyebrow.upper(), W - 80, 262, 26, MED, MINT, "end")
-    foot = T("@markazly_uz", W / 2, 1760, 30, MED, MUTED, "middle")
+    foot = T("@markazly.uz", W / 2, 1760, 30, MED, MUTED, "middle")
     return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">{DEFS}'
             f'<rect width="{W}" height="{H}" fill="url(#bg)"/><rect y="1300" width="{W}" height="620" fill="url(#glow)"/>'
             f'{logo}{eb}{body}{foot}</svg>')
@@ -306,7 +306,7 @@ def s_aloqa():
     b += T("Markazingizga kelib, tizimni", 80, 500, 36, REG, MUTED)
     b += T("jonli ko‘rsatamiz", 80, 548, 36, REG, MUTED)
     rows = [("call", "Telefon", "+998 50 999 97 33"), ("send", "Telegram", "@abdulloh_mrktlg"),
-            ("insta", "Instagram", "@markazly_uz"), ("globe", "Sayt", "markazly.uz")]
+            ("insta", "Instagram", "@markazly.uz"), ("globe", "Sayt", "markazly.uz")]
     y = 640
     for icn, lab, val in rows:
         b += rr(80, y, 920, 190, 34, "url(#card)", LINE, 2)

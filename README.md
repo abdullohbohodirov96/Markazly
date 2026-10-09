@@ -3,7 +3,7 @@
 **O‘quv markazlari uchun web tizim** — boshqaruv tizimi, markaz sayti va o‘quvchi kabineti bitta obunada.
 
 - Sayt: `markazly.uz` (rejada)
-- Instagram: [@markazly_uz](https://instagram.com/markazly_uz)
+- Instagram: [@markazly.uz](https://instagram.com/markazly.uz)
 - Aloqa: +998 50 999 97 33 · Telegram [@abdulloh_mrktlg](https://t.me/abdulloh_mrktlg)
 
 ## Papkalar

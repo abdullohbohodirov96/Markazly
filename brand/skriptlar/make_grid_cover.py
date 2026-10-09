@@ -28,16 +28,22 @@ b = f'<rect width="{GW}" height="{GH}" fill="{BOARD}"/>{grid_lines}'
 b += f'<rect width="{GW}" height="{GH}" fill="url(#l1)"/><rect width="{GW}" height="{GH}" fill="url(#l3)"/>'
 # notebook margin line (left tile) and a light wave running through all three tiles
 b += f'<line x1="150" y1="0" x2="150" y2="{GH}" stroke="#FF7A6B" stroke-opacity=".35" stroke-width="3"/>'
-b += (f'<path d="M0 1250 C 600 1150, 1000 1350, 1620 1240 S 2700 1120, {GW} 1220" fill="none" stroke="url(#wave)" stroke-width="5" opacity=".9"/>'
-      f'<path d="M0 1290 C 620 1200, 1020 1390, 1620 1285 S 2700 1170, {GW} 1265" fill="none" stroke="url(#wave)" stroke-width="2" opacity=".45"/>')
-
-# ── tile 1: logo
-mh = 430; mw = mh * 342 / 377
-b += f'<image href="{MARK}" x="{540 - mw / 2:.1f}" y="260" width="{mw:.1f}" height="{mh}"/>'
-wsz = 148
+BG_LEN = len(b)
+# ── tile 1: big glowing mark; the door's light spills right across all three tiles
+b += ('<defs><radialGradient id="halo1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#2EE59D" stop-opacity=".38"/>'
+      '<stop offset="55%" stop-color="#1FB5C8" stop-opacity=".10"/><stop offset="100%" stop-color="#1FB5C8" stop-opacity="0"/></radialGradient>'
+      '<linearGradient id="beam" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#3CF2A8" stop-opacity=".45"/>'
+      '<stop offset="45%" stop-color="#2EE59D" stop-opacity=".16"/><stop offset="100%" stop-color="#1FB5C8" stop-opacity="0"/></linearGradient>'
+      '<filter id="soft" x="-20%" y="-60%" width="140%" height="220%"><feGaussianBlur stdDeviation="28"/></filter>'
+      '<radialGradient id="floor1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#3CF2A8" stop-opacity=".55"/><stop offset="100%" stop-color="#3CF2A8" stop-opacity="0"/></radialGradient></defs>')
+b += '<circle cx="540" cy="560" r="520" fill="url(#halo1)"/>'
+b += '<ellipse cx="560" cy="950" rx="360" ry="46" fill="url(#floor1)"/>'
+mh = 780; mw = mh * 342 / 377
+b += f'<image href="{MARK}" x="{540 - mw / 2 + 10:.1f}" y="170" width="{mw:.1f}" height="{mh}"/>'
+wsz = 150
 w1 = SEMI.width("Markaz", wsz); w2 = SEMI.width("ly", wsz); wx = 540 - (w1 + w2) / 2
-b += T("Markaz", wx, 900, wsz, SEMI, FG) + T("ly", wx + w1, 900, wsz, SEMI, "url(#gh)")
-b += T("O‘quv markaz boshqaruv tizimi", 540, 985, 40, REG, MUTED, "middle")
+b += T("Markaz", wx, 1145, wsz, SEMI, FG) + T("ly", wx + w1, 1145, wsz, SEMI, "url(#gh)")
+b += T("O‘quv markaz boshqaruv tizimi", 540, 1222, 40, REG, MUTED, "middle")
 
 # ── tile 2: headline
 x2 = TW + 90
@@ -77,10 +83,25 @@ b += T("@markazly.uz", 2 * TW + 540, 1225, 36, MED, FG, "middle")
 b += rr(2 * TW + 40, 560, 330, 108, 24, FG) + rr(2 * TW + 60, 582, 64, 64, 18, MINT) + ic("check", 2 * TW + 76, 598, 32, INK, 3)
 b += T("To‘lov qabul", 2 * TW + 140, 610, 26, SEMI, INK) + T("590 000 so‘m", 2 * TW + 140, 646, 24, REG, "#3F5A4D")
 
-svg = f'<svg xmlns="http://www.w3.org/2000/svg" width="{GW}" height="{GH}" viewBox="0 0 {GW} {GH}">{defs}{b}</svg>'
+from PIL import ImageDraw, ImageFilter
+import io
+def render(body, transparent=False):
+    sv = f'<svg xmlns="http://www.w3.org/2000/svg" width="{GW}" height="{GH}" viewBox="0 0 {GW} {GH}">{defs}{body}</svg>'
+    return Image.open(io.BytesIO(cairosvg.svg2png(bytestring=sv.encode()))).convert("RGBA")
+bg_img = render(b[:BG_LEN])
+# soft light beam on the floor, from the door of the mark to the right edge (blurred, fading out)
+beam = Image.new("RGBA", (GW, GH), (0, 0, 0, 0))
+mask = Image.new("L", (GW, GH), 0)
+ImageDraw.Draw(mask).polygon([(650, 905), (GW, 1060), (GW, 1250), (650, 985)], fill=255)
+fade = Image.linear_gradient("L").rotate(90, expand=True).resize((GW, GH)).transpose(Image.FLIP_LEFT_RIGHT)  # 255 at left → 0 at right
+fade = fade.point(lambda v: int(v * 0.55))
+mask = Image.composite(fade, Image.new("L", (GW, GH), 0), mask).filter(ImageFilter.GaussianBlur(38))
+beam.paste((60, 242, 168, 255), (0, 0, GW, GH)); beam.putalpha(mask)
+bg_img = Image.alpha_composite(bg_img, beam)
+fg_img = render(b[BG_LEN:], True)
+full_img = Image.alpha_composite(bg_img, fg_img).convert("RGB")
 full = os.path.join(OUTG, "toliq_panorama.png")
-cairosvg.svg2png(bytestring=svg.encode(), write_to=full)
-
+full_img.save(full)
 im = Image.open(full).convert("RGB")
 names = ["1_chap", "2_orta", "3_ong"]
 for i, n in enumerate(names):

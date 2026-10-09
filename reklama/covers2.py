@@ -125,11 +125,20 @@ def v_trial(x, y, w, h):
         o += f'<circle cx="{x+410}" cy="{yy}" r="30" fill="#123A2C"/>' + ic("check", x + 394, yy - 16, 32, MINT, 3) + T(t, x + 460, yy + 11, 28, MED, FG)
     return o
 
+def v_all(x, y, w, h):
+    o = ""
+    tiles = [("Boshqaruv", "users"), ("Filiallar", "branch"), ("Sayt", "globe"), ("Kabinet", "cap"), ("Reyting", "chart"), ("To‘lovlar", "wallet")]
+    tw, th = (w - 80 - 40) / 3, (h - 80 - 20) / 2
+    for k, (nm, icn) in enumerate(tiles):
+        tx = x + 40 + (k % 3) * (tw + 20); ty = y + 40 + (k // 3) * (th + 20)
+        o += rr(tx, ty, tw, th, 24, SURF2) + f'<circle cx="{tx+tw/2:.0f}" cy="{ty+70}" r="44" fill="#123A2C"/>' + ic(icn, tx + tw / 2 - 24, ty + 46, 48, MINT, 2) + T(nm, tx + tw / 2, ty + 150, 28, SEMI, FG, "middle")
+    return o
 cover(1, "Hisobot", ["Admin", "hisobotiga", "ishonasizmi?"], v_admin, "cover_01_admin.png", True)
 cover(2, "Markazly", ["Markazingiz", "bitta tizimda", "to‘liq"], v_system, "cover_02_tizim.png")
 cover(3, "Qarzdorlar", ["Har oy", "qancha pul", "yo‘qotyapsiz?"], v_loss, "cover_03_yoqotish.png", True)
 cover(4, "Filiallar", ["Qaysi filialingiz", "zarar", "qilyapti?"], v_branch, "cover_04_filiallar.png", True)
 cover(5, "Ota-onalar", ["“Bolam darsga", "keldimi?”", "Javob tayyor"], v_parent, "cover_05_ota_ona.png")
+cover(7, "Umumiy", ["Hammasi", "bitta", "tizimda"], v_all, "cover_07_umumiy.png")
 cover(6, "Bepul sinov", ["Avval sinang,", "yoqsa", "keyin to‘lang"], v_trial, "cover_06_sinov.png")
 
 # profile grid preview (3:4 centre crops, newest first = 6..1)

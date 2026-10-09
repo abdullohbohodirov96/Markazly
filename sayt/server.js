@@ -59,9 +59,10 @@ async function handleLead(req, res) {
     center: clip(f.center, 120),
     size: clip(f.size, 40),
     plan: clip(f.plan, 40),
+    source: clip(f.source, 40) || "Ariza formasi",
   };
-  if (!lead.name || lead.phone.replace(/\D/g, "").length < 9 || !lead.center) {
-    return send(res, 400, { ok: false, error: "Ism, telefon va markaz nomini to'ldiring." });
+  if (!lead.name || lead.phone.replace(/\D/g, "").length < 9) {
+    return send(res, 400, { ok: false, error: "Ism va telefon raqamini to'ldiring." });
   }
   if (!BOT_TOKEN || !CHAT_ID) return send(res, 500, { ok: false, error: "Server sozlanmagan." });
 
@@ -69,9 +70,10 @@ async function handleLead(req, res) {
     `🆕 <b>Yangi ariza — 7 kunlik bepul sinov</b>\n\n` +
     `👤 <b>Ism:</b> ${esc(lead.name)}\n` +
     `📞 <b>Telefon:</b> ${esc(lead.phone)}\n` +
-    `🏫 <b>Markaz:</b> ${esc(lead.center)}\n` +
-    `👥 <b>O'quvchilar:</b> ${esc(lead.size)}\n` +
-    `💳 <b>Tarif:</b> ${esc(lead.plan)}\n\n` +
+    `🏫 <b>Markaz:</b> ${esc(lead.center || "ko'rsatilmagan")}\n` +
+    `👥 <b>O'quvchilar:</b> ${esc(lead.size || "—")}\n` +
+    `💳 <b>Tarif:</b> ${esc(lead.plan || "—")}\n` +
+    `📍 <b>Qayerdan:</b> ${esc(lead.source)}\n\n` +
     `🕒 ${new Date().toLocaleString("uz-UZ", { timeZone: "Asia/Tashkent" })}`;
 
   try {

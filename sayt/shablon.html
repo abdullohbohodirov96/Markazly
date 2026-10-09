@@ -341,6 +341,63 @@ input:focus,select:focus{outline:none;border-color:var(--mint)}
 .shop small{display:block;margin-top:6px;font:600 13px var(--mono);color:var(--mint)}
 .addon-tag{display:inline-block;font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:var(--mint);padding:5px 10px;border-radius:999px;margin-left:10px;vertical-align:middle}
 
+/* quick-start modal */
+.qs{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(2,8,6,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.qs[hidden]{display:none!important}
+.qs-card{position:relative;width:min(460px,100%);max-height:calc(100% - 20px);overflow:auto;background:radial-gradient(90% 70% at 50% 0%,rgba(46,229,157,.18),transparent 70%),var(--surface);border:1px solid rgba(46,229,157,.35);border-radius:26px;padding:30px 26px 24px;box-shadow:0 40px 90px -20px rgba(0,0,0,.9);animation:qsIn .35s ease-out}
+@keyframes qsIn{from{transform:translateY(16px);opacity:.4}}
+.qs-x{position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--fg);font:400 22px/1 var(--body);cursor:pointer}
+.qs-time{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--mono);color:var(--ink);background:var(--mint);padding:6px 12px;border-radius:999px}
+.qs h2{font-size:clamp(26px,6vw,32px);margin-top:14px}
+.qs h2 span{background:linear-gradient(120deg,var(--mint),var(--teal));-webkit-background-clip:text;background-clip:text;color:transparent}
+.qs p.sub{color:var(--muted);margin-top:8px;font-size:15px}
+.qs form{margin-top:18px;gap:12px}
+.qs .perks{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:14px;font-size:13px;color:var(--muted);padding:0;list-style:none}
+.qs .perks li::before{content:"✓ ";color:var(--mint)}
+.qs-later{background:none;border:0;color:var(--muted);font:500 14px var(--body);margin-top:6px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+@media (max-width:560px){
+  .qs{align-items:flex-end;padding:0}
+  .qs-card{width:100%;border-radius:26px 26px 0 0;padding:26px 20px calc(20px + env(safe-area-inset-bottom,0px));max-height:92%}
+}
+/* side message nudge */
+.nudge{position:fixed;right:20px;bottom:24px;z-index:45;width:min(340px,calc(100vw - 32px));display:flex;gap:12px;align-items:flex-end}
+.nudge[hidden]{display:none!important}
+.nudge.in{animation:nIn .6s cubic-bezier(.2,.9,.25,1.15) both}
+@keyframes nIn{from{transform:translateX(120%);opacity:0}to{transform:none;opacity:1}}
+.n-av{position:relative;flex:none;width:52px;height:52px;border-radius:50%;background:#0B1D16;border:2px solid var(--mint);display:grid;place-items:center;box-shadow:0 10px 30px -10px rgba(46,229,157,.7)}
+.n-av img{width:30px;height:auto}
+.n-av::after{content:"";position:absolute;right:1px;bottom:1px;width:12px;height:12px;border-radius:50%;background:var(--good);border:2px solid var(--bg)}
+.n-av::before{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--mint);opacity:0;animation:ring 2.4s ease-out infinite}
+@keyframes ring{0%{transform:scale(.85);opacity:.7}100%{transform:scale(1.35);opacity:0}}
+.n-bubble{position:relative;flex:1;min-width:0;background:var(--fg);color:var(--ink);border-radius:20px 20px 6px 20px;padding:14px 16px 14px;box-shadow:0 24px 50px -18px rgba(0,0,0,.85);cursor:pointer;text-align:left;border:0;font:inherit;order:-1;animation:wig 7s ease-in-out 3s infinite}
+@keyframes wig{0%,92%,100%{transform:none}94%{transform:rotate(-2deg)}96%{transform:rotate(2deg)}98%{transform:rotate(-1deg)}}
+.n-bubble small{display:block;font:600 12px var(--body);color:#3F5A4D}
+.n-bubble b{display:block;font:700 17px var(--display);margin-top:3px}
+.n-bubble span.s{display:block;font-size:14px;color:#2B4337;margin-top:2px}
+.n-bubble .go{display:inline-flex;margin-top:10px;padding:8px 14px;border-radius:999px;font:600 14px var(--body);background:linear-gradient(135deg,var(--mint),var(--teal));color:var(--ink)}
+.n-typing{display:flex;gap:5px;padding:6px 2px}
+.n-typing i{width:8px;height:8px;border-radius:50%;background:#7C958A;animation:dot 1s infinite}
+.n-typing i:nth-child(2){animation-delay:.15s}.n-typing i:nth-child(3){animation-delay:.3s}
+@keyframes dot{0%,60%,100%{transform:none;opacity:.5}30%{transform:translateY(-5px);opacity:1}}
+.n-x{position:absolute;top:-10px;left:-10px;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:400 16px/1 var(--body);cursor:pointer;display:grid;place-items:center}
+@media (max-width:760px){.nudge{right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px))}}
+
+/* mobile sticky CTA */
+.mbar{display:none}
+@media (max-width:760px){
+  .mbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;gap:10px;align-items:center;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:rgba(5,14,11,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line)}
+  .mbar div{flex:1;min-width:0;font-size:13px;color:var(--muted);line-height:1.3}
+  .mbar b{display:block;color:var(--fg);font-size:15px}
+  .mbar .btn{padding:12px 16px;font-size:15px;white-space:nowrap}
+  body{padding-bottom:84px}
+  .hero h1{font-size:40px}
+  .hero .cta .btn{flex:1;justify-content:center}
+  section.block{padding-block:64px}
+  .sec-head{margin-bottom:28px}
+  .toast{left:6px;right:auto}
+}
+@media (max-width:400px){.kpis{grid-template-columns:1fr 1fr}.kpi.hot{grid-column:1/-1}}
+
 footer{padding-block:40px 56px;color:var(--muted);font-size:14px}
 footer .wrap{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:center;justify-content:space-between}
 
@@ -814,6 +871,45 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:center;justif
 </section>
 </main>
 
+<div class="mbar" role="region" aria-label="Tezkor boshlash">
+  <div><b>7 kun bepul</b>3 daqiqada boshlang</div>
+  <button class="btn btn-primary" type="button" data-qs-open>Boshlash</button>
+</div>
+
+<div class="nudge" id="nudge" hidden>
+  <button class="n-bubble" type="button" id="n-open" aria-label="Hoziroq tekinga boshlash">
+    <span class="n-typing" id="n-typing" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span id="n-msg" hidden>
+      <small>Markazly · hozirgina</small>
+      <b>Hoziroq tekinga boshlang! 🚀</b>
+      <span class="s">7 kun bepul. Ro‘yxatdan o‘tish — atigi 3 daqiqa.</span>
+      <span class="go">Boshlash →</span>
+    </span>
+  </button>
+  <div class="n-av"><img src="{{MARK}}" alt="" width="30" height="33"></div>
+  <button class="n-x" type="button" id="n-close" aria-label="Xabarni yopish">×</button>
+</div>
+
+<div class="qs" id="qs" role="dialog" aria-modal="true" aria-labelledby="qs-title" hidden>
+  <div class="qs-card">
+    <button class="qs-x" type="button" id="qs-close" aria-label="Yopish">×</button>
+    <span class="qs-time"><svg width="14" height="14"><use href="#i-cal"/></svg>Atigi 3 daqiqa</span>
+    <h2 id="qs-title">Hoziroq <span>bepul boshlang</span></h2>
+    <p class="sub">Ismingiz va raqamingizni qoldiring — 7 kunlik sinovni bugunoq ochib beramiz.</p>
+    <form id="qs-form" novalidate>
+      <label for="qs-name">Ismingiz<input id="qs-name" autocomplete="name" placeholder="Masalan: Dilshod"></label>
+      <label for="qs-phone">Telefon<input id="qs-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+998 __ ___ __ __"></label>
+      <label for="qs-center">Markaz nomi <span style="opacity:.7">(ixtiyoriy)</span><input id="qs-center" placeholder="Masalan: Nur o‘quv markazi"></label>
+      <input type="text" id="qs-website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+      <p class="err" id="qs-err" hidden></p>
+      <button class="btn btn-primary" type="submit" id="qs-submit" style="justify-content:center">Bepul boshlash</button>
+      <div class="done" id="qs-ok" hidden><b>Rahmat! Arizangiz qabul qilindi.</b> Tez orada qo‘ng‘iroq qilamiz.</div>
+    </form>
+    <ul class="perks"><li>Karta kerak emas</li><li>Ma’lumotlarni o‘zimiz yuklaymiz</li><li>Yoqmasa — to‘lamaysiz</li></ul>
+    <button class="qs-later" type="button" id="qs-later">Avval saytni ko‘raman</button>
+  </div>
+</div>
+
 <footer>
   <div class="wrap">
     <a class="brand" href="#top" aria-label="Markazly"><img class="mk" src="{{MARK}}" alt="" width="34" height="38" style="height:32px"><img class="wm" src="{{WORD}}" alt="Markazly" width="98" height="22" style="height:18px"></a>
@@ -884,5 +980,48 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:center;justif
     }).catch(function(){fallback()}).then(function(){btn.disabled=false;btn.textContent='Ariza yuborish';});
   });
   document.getElementById('f-copy').addEventListener('click',function(){copyText(document.getElementById('f-text').textContent,this)});
+
+  // quick-start modal: opens shortly after the page loads (once per visit), and from "Boshlash" buttons
+  var qs=document.getElementById('qs'), lastFocus=null;
+  function seen(){try{return sessionStorage.getItem('qs-seen')==='1'}catch(e){return false}}
+  function markSeen(){try{sessionStorage.setItem('qs-seen','1')}catch(e){}}
+  function openQs(){lastFocus=document.activeElement;qs.hidden=false;document.body.style.overflow='hidden';if(window.matchMedia('(min-width:561px)').matches)setTimeout(function(){document.getElementById('qs-name').focus({preventScroll:true})},60);markSeen();}
+  function closeQs(){qs.hidden=true;document.body.style.overflow='';if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+  document.getElementById('qs-close').addEventListener('click',closeQs);
+  document.getElementById('qs-later').addEventListener('click',closeQs);
+  qs.addEventListener('click',function(e){if(e.target===qs)closeQs();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!qs.hidden)closeQs();});
+  document.querySelectorAll('[data-qs-open]').forEach(function(b){b.addEventListener('click',openQs)});
+  // side "message" nudge: slides in, shows typing dots, then the offer; tap opens the form
+  var nudge=document.getElementById('nudge');
+  function hideNudge(){nudge.hidden=true;markSeen();}
+  document.getElementById('n-open').addEventListener('click',function(){hideNudge();openQs();});
+  document.getElementById('n-close').addEventListener('click',hideNudge);
+  document.querySelectorAll('[data-qs-open]').forEach(function(b){b.addEventListener('click',function(){nudge.hidden=true;})});
+  if(!seen()){
+    setTimeout(function(){
+      if(!qs.hidden)return;
+      nudge.hidden=false;nudge.classList.add('in');
+      setTimeout(function(){document.getElementById('n-typing').hidden=true;document.getElementById('n-msg').hidden=false;},1400);
+    },1500);
+  }
+
+  var qf=document.getElementById('qs-form'), qerr=document.getElementById('qs-err'), qok=document.getElementById('qs-ok'), qbtn=document.getElementById('qs-submit');
+  qf.addEventListener('submit',function(e){
+    e.preventDefault();
+    var v=function(id){return document.getElementById(id).value.trim()};
+    var miss=[];
+    if(!v('qs-name'))miss.push('ismingizni');
+    if(v('qs-phone').replace(/\D/g,'').length<9)miss.push('telefon raqamingizni');
+    if(miss.length){qerr.textContent='Iltimos, '+miss.join(' va ')+' kiriting.';qerr.hidden=false;return;}
+    qerr.hidden=true;qbtn.disabled=true;qbtn.textContent='Yuborilmoqda…';
+    fetch('/api/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      name:v('qs-name'),phone:v('qs-phone'),center:v('qs-center'),size:'—',plan:'—',source:'Tezkor oyna',website:v('qs-website')
+    })}).then(function(r){return r.json().catch(function(){return {ok:false}})}).then(function(j){
+      if(j&&j.ok){qok.hidden=false;qbtn.hidden=true;}
+      else{qerr.innerHTML='Ariza yuborilmadi. Qo‘ng‘iroq qiling: <b>+998 50 999 97 33</b> yoki Telegram: <a href="https://t.me/abdulloh_mrktlg" target="_blank" rel="noopener">@abdulloh_mrktlg</a>';qerr.hidden=false;}
+    }).catch(function(){qerr.innerHTML='Ariza yuborilmadi. Qo‘ng‘iroq qiling: <b>+998 50 999 97 33</b> yoki Telegram: <a href="https://t.me/abdulloh_mrktlg" target="_blank" rel="noopener">@abdulloh_mrktlg</a>';qerr.hidden=false;})
+    .then(function(){qbtn.disabled=false;qbtn.textContent='Bepul boshlash';});
+  });
 })();
 </script>

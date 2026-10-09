@@ -556,10 +556,12 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:center;justif
           <label for="f-size">O‘quvchilar soni<select id="f-size" name="size"><option>100 gacha</option><option>101–300</option><option>301–700</option><option>700 dan ko‘p</option></select></label>
           <label for="f-plan">Qiziqqan tarif<select id="f-plan" name="plan"><option>Start</option><option selected>Standart</option><option>Biznes</option><option>Premium</option></select></label>
         </div>
+        <input type="text" id="f-website" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
         <p class="err" id="f-err" hidden></p>
-        <button class="btn btn-primary" type="submit" style="justify-content:center">Arizani tayyorlash</button>
+        <button class="btn btn-primary" type="submit" id="f-submit" style="justify-content:center">Ariza yuborish</button>
+        <div class="done" id="f-ok" hidden><b>Arizangiz qabul qilindi.</b> Tez orada siz bilan bog‘lanamiz.</div>
         <div class="done" id="f-done" hidden>
-          <b>Ariza tayyor.</b> Uni Telegram orqali yuboring yoki yuqoridagi raqamga qo‘ng‘iroq qiling.
+          <b>Ariza yuborilmadi.</b> Uni Telegram orqali yuboring yoki yuqoridagi raqamga qo‘ng‘iroq qiling.
           <pre id="f-text"></pre>
           <div style="display:flex;flex-wrap:wrap;gap:10px">
             <a class="btn btn-primary" id="f-tg" href="https://t.me/abdulloh_mrktlg" target="_blank" rel="noopener">Telegramda ochish</a>
@@ -614,8 +616,8 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:center;justif
   function sel(btn){var el=btn.parentElement.querySelector('b,pre');if(!el)return;var r=document.createRange();r.selectNodeContents(el);var s=getSelection();s.removeAllRanges();s.addRange(r);}
   document.querySelectorAll('[data-copy]').forEach(function(b){b.addEventListener('click',function(){copyText(b.dataset.copy,b)})});
 
-  // lead form: no backend here — build the message for Telegram / phone
-  var form=document.getElementById('lead'), err=document.getElementById('f-err'), done=document.getElementById('f-done');
+  // lead form: POST to /api/lead (server.js sends it to Telegram); if that fails, offer a ready-made Telegram message
+  var form=document.getElementById('lead'), err=document.getElementById('f-err'), done=document.getElementById('f-done'), okBox=document.getElementById('f-ok'), btn=document.getElementById('f-submit');
   form.addEventListener('submit',function(e){
     e.preventDefault();
     var v=function(id){return document.getElementById(id).value.trim()};
@@ -624,12 +626,22 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:center;justif
     if(!v('f-name'))miss.push('ismingizni');
     if(digits.length<9)miss.push('telefon raqamingizni');
     if(!v('f-center'))miss.push('markaz nomini');
-    if(miss.length){err.textContent='Iltimos, '+miss.join(', ')+' kiriting.';err.hidden=false;done.hidden=true;return;}
+    if(miss.length){err.textContent='Iltimos, '+miss.join(', ')+' kiriting.';err.hidden=false;done.hidden=true;okBox.hidden=true;return;}
     err.hidden=true;
     var text='Markazly — 7 kunlik bepul sinov\nIsm: '+v('f-name')+'\nTelefon: '+v('f-phone')+'\nMarkaz: '+v('f-center')+'\nO‘quvchilar: '+v('f-size')+'\nTarif: '+v('f-plan');
-    document.getElementById('f-text').textContent=text;
-    document.getElementById('f-tg').href='https://t.me/share/url?url='+encodeURIComponent('https://markazly.uz')+'&text='+encodeURIComponent(text);
-    done.hidden=false;
+    function fallback(msg){
+      document.getElementById('f-text').textContent=text;
+      document.getElementById('f-tg').href='https://t.me/share/url?url='+encodeURIComponent('https://markazly.uz')+'&text='+encodeURIComponent(text);
+      if(msg){err.textContent=msg;err.hidden=false;}
+      done.hidden=false;okBox.hidden=true;
+    }
+    btn.disabled=true;btn.textContent='Yuborilmoqda…';
+    fetch('/api/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      name:v('f-name'),phone:v('f-phone'),center:v('f-center'),size:v('f-size'),plan:v('f-plan'),website:v('f-website')
+    })}).then(function(r){return r.json().catch(function(){return {ok:false}})}).then(function(j){
+      if(j&&j.ok){okBox.hidden=false;done.hidden=true;form.reset();}
+      else fallback(j&&j.error);
+    }).catch(function(){fallback()}).then(function(){btn.disabled=false;btn.textContent='Ariza yuborish';});
   });
   document.getElementById('f-copy').addEventListener('click',function(){copyText(document.getElementById('f-text').textContent,this)});
 })();

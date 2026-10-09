@@ -18,6 +18,36 @@
 | `prezentatsiya/` | Mijozlarga ko‘rsatiladigan prezentatsiya slaydlari (14 ta) va tartibi (`deck.json`). |
 | `docs/` | Tariflar, shartlar, xarajatlar, server va xavfsizlik bo‘yicha qarorlar. |
 
+## Sayt va arizalar Telegram'ga
+
+Saytdagi "Ariza yuborish" formasi `sayt/server.js` ga yuboriladi, server esa arizani Telegram bot orqali sizga xabar qilib jo‘natadi. Tashqi kutubxona kerak emas (Node.js 18+).
+
+### Kerakli env o‘zgaruvchilar
+
+| Nom | Nima | Qayerdan olinadi |
+|---|---|---|
+| `TELEGRAM_BOT_TOKEN` | Bot tokeni | @BotFather → `/newbot` → token |
+| `TELEGRAM_CHAT_ID` | Arizalar keladigan chat | Pastdagi qadamlar |
+| `PORT` | Server porti | Render o‘zi beradi, qo‘lda yozmang |
+
+**Chat ID ni olish:**
+1. Yangi botingizga Telegram'da `/start` deb yozing (guruhga yuborilsin desangiz — botni guruhga qo‘shib, guruhda biror xabar yozing).
+2. Brauzerda oching: `https://api.telegram.org/bot<TOKEN>/getUpdates`
+3. Javobdagi `"chat":{"id": ... }` raqami — shu `TELEGRAM_CHAT_ID`. Guruh ID minus bilan boshlanadi.
+
+### Render'ga joylash
+
+1. Render → **New → Web Service** → shu repozitoriy.
+2. **Root Directory:** `sayt` · **Build command:** bo‘sh · **Start command:** `npm start`
+3. **Environment** bo‘limiga `TELEGRAM_BOT_TOKEN` va `TELEGRAM_CHAT_ID` ni qo‘shing.
+4. Domen: Settings → Custom Domains → `markazly.uz`.
+
+Mahalliy sinash: `cd sayt && TELEGRAM_BOT_TOKEN=... TELEGRAM_CHAT_ID=... npm start` → http://localhost:3000
+
+Himoya: yashirin "honeypot" maydon (botlar uchun), bir IP dan 10 daqiqada 5 tadan ko‘p ariza qabul qilinmaydi. Server ishlamasa, forma arizani Telegram orqali qo‘lda yuborishni taklif qiladi.
+
+> `index.html` ni tahrirlamang — `shablon.html` ni o‘zgartiring, keyin logolarni `{{MARK}}`/`{{WORD}}` o‘rniga qo‘yib `index.html` ni qayta yig‘ing.
+
 ## Brend
 
 | Rang | Kod | Qayerda |

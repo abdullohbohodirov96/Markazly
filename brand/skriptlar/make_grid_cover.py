@@ -43,24 +43,29 @@ b += f'<image href="{MARK}" x="{540 - mw / 2 + 10:.1f}" y="170" width="{mw:.1f}"
 wsz = 150
 w1 = SEMI.width("Markaz", wsz); w2 = SEMI.width("ly", wsz); wx = 540 - (w1 + w2) / 2
 b += T("Markaz", wx, 1145, wsz, SEMI, FG) + T("ly", wx + w1, 1145, wsz, SEMI, "url(#gh)")
-b += T("O‘quv markaz boshqaruv tizimi", 540, 1222, 40, REG, MUTED, "middle")
+b += T("O‘QUV MARKAZLARI UCHUN", 540, 1235, 50, SEMI, MINT, "middle")
 
-# ── tile 2: headline
+# ── tile 2: problem → result
 x2 = TW + 90
-b += T("O‘QUV MARKAZLARI UCHUN", x2, 360, 34, SEMI, MINT)
-b += T("Markazingizni", x2, 500, 112, SEMI, FG)
-b += T("bitta tizimdan", x2, 630, 112, SEMI, FG)
-b += T("boshqaring", x2, 760, 112, SEMI, "url(#gh)")
-chips = [("tick", "Davomat va to‘lovlar"), ("chart", "Filiallar hisoboti"), ("globe", "Sayt + o‘quvchi kabineti")]
-cy = 850
-for icn, t in chips:
-    w = REG.width(t, 38) + 110
-    b += rr(x2, cy, w, 82, 41, BOARD2, LINE, 2) + ic(icn, x2 + 26, cy + 21, 40) + T(t, x2 + 82, cy + 54, 38, MED, FG)
-    cy += 104
+maxw = TW - 180
+lines = [("Daftar, Excel va", FG), ("qarzdorlarsiz", FG), ("boshqaring", "url(#gh)")]
+hs = 112
+while max(SEMI.width(t, hs) for t, _ in lines) > maxw:
+    hs -= 2
+b += T("O‘QUV MARKAZINGIZNI", x2, 330, 34, SEMI, MINT)
+y = 330 + hs * 1.18
+for t, c in lines:
+    b += T(t, x2, y, hs, SEMI, c); y += hs * 1.14
+cy = y + 10
+for t in ["Qarzdor darhol ko‘rinadi", "Davomat 1 bosishda", "Har filial foydasi aniq"]:
+    w = MED.width(t, 40) + 120
+    b += rr(x2, cy, w, 88, 44, BOARD2, LINE, 2) + rr(x2 + 16, cy + 16, 56, 56, 28, "#123A2C") + ic("check", x2 + 28, cy + 28, 32, MINT, 3) + T(t, x2 + 90, cy + 58, 40, MED, FG)
+    cy += 108
 
 # ── tile 3: phone + offer
-px, py, pw = 2 * TW + 290, 230, 500
-b += rr(px - 12, py - 12, pw + 24, 904, 70, "#020806") + rr(px, py, pw, 880, 58, SURF)
+px, py, pw = 2 * TW + 290, 300, 500
+b += T("Sayt + o‘quvchi kabineti", 2 * TW + 540, 200, 46, SEMI, FG, "middle")
+b += rr(px - 12, py - 12, pw + 24, 834, 70, "#020806") + rr(px, py, pw, 810, 58, SURF)
 b += rr(px + pw / 2 - 75, py + 20, 150, 28, 14, "#020806")
 b += f'<circle cx="{px+60}" cy="{py+104}" r="30" fill="url(#g)"/>' + T("A", px + 60, py + 117, 30, SEMI, INK, "middle")
 b += T("B1 guruh", px + 106, py + 94, 22, REG, MUTED) + T("Aziza Sobirova", px + 106, py + 128, 28, SEMI, FG)
@@ -76,12 +81,13 @@ b += rr(px + 24, cy + 4, pw - 48, 110, 24, SURF2)
 b += T("Shu oy davomati", px + 48, cy + 50, 24, REG, MUTED) + T("92%", px + pw - 48, cy + 52, 30, SEMI, FG, "end")
 b += rr(px + 48, cy + 74, pw - 96, 14, 7, LINE) + rr(px + 48, cy + 74, (pw - 96) * .92, 14, 7, MINT)
 # offer badge overlapping the phone
-b += rr(2 * TW + 140, 1000, 800, 150, 75, "url(#gh)")
-b += T("7 kun bepul sinov", 2 * TW + 540, 1095, 54, SEMI, INK, "middle")
-b += T("@markazly.uz", 2 * TW + 540, 1225, 36, MED, FG, "middle")
+b += rr(2 * TW + 120, 1040, 840, 170, 85, "url(#gh)")
+b += T("7 kun bepul", 2 * TW + 540, 1118, 62, SEMI, INK, "middle")
+b += T("3 daqiqada boshlang", 2 * TW + 540, 1174, 36, MED, "#0A3D27", "middle")
+b += T("@markazly.uz", 2 * TW + 540, 1290, 36, MED, FG, "middle")
 # toast across the 2→3 seam? keep text off seams: place it fully inside tile 3
-b += rr(2 * TW + 40, 560, 330, 108, 24, FG) + rr(2 * TW + 60, 582, 64, 64, 18, MINT) + ic("check", 2 * TW + 76, 598, 32, INK, 3)
-b += T("To‘lov qabul", 2 * TW + 140, 610, 26, SEMI, INK) + T("590 000 so‘m", 2 * TW + 140, 646, 24, REG, "#3F5A4D")
+b += rr(2 * TW + 40, 600, 330, 108, 24, FG) + rr(2 * TW + 60, 622, 64, 64, 18, MINT) + ic("check", 2 * TW + 76, 638, 32, INK, 3)
+b += T("To‘lov qabul", 2 * TW + 140, 650, 26, SEMI, INK) + T("590 000 so‘m", 2 * TW + 140, 686, 24, REG, "#3F5A4D")
 
 from PIL import ImageDraw, ImageFilter
 import io

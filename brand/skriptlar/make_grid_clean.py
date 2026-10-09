@@ -111,7 +111,13 @@ fg += rr(bx - 8, by - 8, bw_ + 16, bh + 16, (bh + 16) / 2, "#2EE59D", None) .rep
 fg += rr(bx, by, bw_, bh, bh / 2, "url(#gh)")
 fg += T("7 kun bepul sinov", bx + bw_ / 2, by + 72, 58, SEMI, INK, "middle")
 fg += T("3 daqiqada boshlang", bx + bw_ / 2, by + 118, 32, MED, "#0A3D27", "middle")
-fg += T("@markazly.uz", 2 * TW + 545, 1250, 38, MED, FG, "middle")
+num = "+998 50 999 97 33"
+nw = SEMI.width(num, 44) + 120
+nx = 2 * TW + 545 - nw / 2
+fg += rr(nx, 1172, nw, 88, 44, "#112E27", "#2EE59D", 2)
+fg += f'<circle cx="{nx+46}" cy="1216" r="28" fill="#2EE59D"/>' + ic("call", nx + 30, 1200, 32, INK, 2.2)
+fg += T(num, nx + 92, 1232, 44, SEMI, FG)
+fg += T("@markazly.uz", 2 * TW + 545, 1322, 34, MED, MUTED, "middle")
 
 
 def render(body):

@@ -234,6 +234,8 @@ async function summary(store, student) {
       status: student.status || 'faol'
     },
     center: { name: settings.centerName || require('./markaz').CONF.nom, phone: settings.phone || '' },
+    /* Gamifikatsiya: modul bor va Sozlamada yoqilgan bo'lsa — kabinetda «Yutuqlarim» */
+    gameOn: require('./markaz').on('gamifikatsiya') && require('./game').conf(settings).enabled,
     groups: groupList,
     finance: {
       charged: bal.charged, received: bal.received,

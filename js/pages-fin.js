@@ -1639,11 +1639,13 @@
       { id: 'funnels', label: 'Sotuv voronkalari' },
       { id: 'users', label: 'Foydalanuvchilar' },
       { id: 'cats', label: 'Xarajat kategoriyalari' },
+      (A.GameUI && A.GameUI.available()) ? { id: 'game', label: '🏆 Gamifikatsiya' } : null,
       { id: 'data', label: 'Ma’lumotlar' },
       { id: 'log', label: 'O’zgarishlar tarixi' }
-    ], tab, function (id) { App.go('settings', { tab: id }); }));
+    ].filter(Boolean), tab, function (id) { App.go('settings', { tab: id }); }));
 
     if (tab === 'funnels') renderFunnels(view, App);
+    if (tab === 'game' && A.GameUI) { A.GameUI.settingsTab(view, App); return; }
 
     /* Zapusk: bepul ochiq dars va birinchi N ta to'lovchiga chegirma.
        Saytda "X/20 joy band" hisobi va muddat shu yerdan olinadi.          */

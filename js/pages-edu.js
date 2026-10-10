@@ -238,8 +238,10 @@
     view.appendChild(UI.tabs([
       { id: 'oquvchilar', label: 'O’quvchilar' },
       { id: 'jadval', label: 'Darslar' },
-      { id: 'davomat', label: 'Davomat' }
-    ], tab, function (id) { App.go('group', { id: g.id, tab: id }); }));
+      { id: 'davomat', label: 'Davomat' },
+      (A.GameUI && A.GameUI.enabled()) ? { id: 'reyting', label: '🏆 Reyting' } : null
+    ].filter(Boolean), tab, function (id) { App.go('group', { id: g.id, tab: id }); }));
+    if (tab === 'reyting' && A.GameUI) { A.GameUI.groupTab(view, g, App); return; }
 
     if (tab === 'oquvchilar') {
       view.appendChild(UI.card(null, members.length ? UI.table([
@@ -1402,8 +1404,12 @@
     var doc = D.lessonsCached(g.id, ym);
     var rec = (doc.items && doc.items[date]) || {};
     var state = {};
+    var extra = {};          // gamifikatsiya: { hw: 'ha'|'yoq', faol: true }
+    var GAME = A.GameUI && A.GameUI.enabled();
     members.forEach(function (m) {
-      state[m.id] = (rec.attendance && rec.attendance[m.id] && rec.attendance[m.id].status) || null;
+      var a0 = rec.attendance && rec.attendance[m.id];
+      state[m.id] = (a0 && a0.status) || null;
+      extra[m.id] = { hw: a0 && a0.hw, faol: !!(a0 && a0.faol) };
     });
 
     var rowsBox = h('div');
@@ -1418,10 +1424,11 @@
             onclick: function () { state[m.id] = state[m.id] === k ? null : k; paint(); }
           }, conf.label);
         }));
-        rowsBox.appendChild(h('div', { class: 'att-row' }, [
+        rowsBox.appendChild(h('div', { class: 'att-row' + (GAME ? ' gm' : '') }, [
           UI.avatar(Q.studentName(m.studentId)),
           h('div', { class: 'nm' }, Q.studentName(m.studentId)),
-          opts
+          opts,
+          GAME ? A.GameUI.attendanceMarks(extra[m.id], function () { }, !App.can('attendance.mark')) : null
         ]));
       });
     }
@@ -1450,6 +1457,8 @@
                 members.forEach(function (m) {
                   if (state[m.id]) {
                     r.attendance[m.id] = { status: state[m.id], at: A.nowStamp(), by: App.user.name };
+                    if (extra[m.id].hw) r.attendance[m.id].hw = extra[m.id].hw;
+                    if (extra[m.id].faol) r.attendance[m.id].faol = true;
                   } else {
                     delete r.attendance[m.id];
                   }
@@ -1476,8 +1485,14 @@
       ]) : null
     ]);
 
+    var gmLegend = GAME ? h('div', { class: 'gm-legend' }, [
+      h('span', {}, '🏆 Gamifikatsiya:'),
+      h('span', {}, [h('b', {}, '📚'), ' — uy vazifasi (1 marta bosing: ✓ bajardi, 2 marta: ✗ bajarmadi)']),
+      h('span', {}, [h('b', {}, '☆'), ' — darsda faol bo‘ldi']),
+      h('span', { class: 'muted' }, 'Ballar o‘quvchi kabinetida o‘zi qo‘shiladi.')
+    ]) : null;
     view.appendChild(UI.card(g.name + ' · ' + A.dateLabel(date),
-      members.length ? [rowsBox, footer] : UI.empty({ title: 'Guruhda o’quvchi yo’q', text: 'Avval o’quvchi qo’shing.' }),
+      members.length ? [gmLegend, rowsBox, footer].filter(Boolean) : UI.empty({ title: 'Guruhda o’quvchi yo’q', text: 'Avval o’quvchi qo’shing.' }),
       null, true));
   };
 })(typeof window !== 'undefined' ? window : globalThis);

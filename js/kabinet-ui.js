@@ -17,6 +17,7 @@
     { id: 'tolov', label: 'To’lovlarim', short: 'To’lov', icon: 'wallet' },
     { id: 'fayllar', label: 'Fayllarim', icon: 'upload' },
     { id: 'savol', label: 'Savol-javob', icon: 'chat' },
+    { id: 'yutuqlar', label: 'Yutuqlarim', short: 'Yutuqlar', icon: 'award', mob: true },
     { id: 'profil', label: 'Profil', icon: 'person' }
   ];
   var DAYS = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba', 'Yakshanba'];
@@ -162,11 +163,14 @@
     /* Onlayn kurs moduli o'chiq bo'lsa (markaz.json) — "Darslarim" va "Lug'at" bo'limlari yo'q,
        uy vazifasi va testlar guruh darslaridan (LMS) olinadi. */
     var COURSE = A.mod ? A.mod('onlaynKurs') : true;
-    var GAME = A.mod ? A.mod('gamifikatsiya') : false;
+    var GAME = (A.mod ? A.mod('gamifikatsiya') : false) && d.gameOn === true;
     var NAV = NAV_ALL.filter(function (n) {
       if (!COURSE && (n.id === 'darslar' || n.id === 'lugat')) return false;
       if (!GAME && n.id === 'yutuqlar') return false;
       return true;
+    }).map(function (n) {
+      /* telefonda pastki tasmada 4 tadan ortiq bo'lmasin */
+      return (COURSE && n.id === 'yutuqlar') ? Object.assign({}, n, { mob: false }) : n;
     });
     var src = makeSource(d);
     if (A.Speak) A.Speak.loadMap();
@@ -271,7 +275,8 @@
 
     function paintView() {
       UI.clear(view);
-      var fn = { asosiy: vHome, darslar: vLessons, vazifalar: vHomework, lugat: vVocab, jadval: vSchedule, tolov: vPay, fayllar: vFiles, savol: vAsk, profil: vProfile }[cur];
+      var fn = { asosiy: vHome, darslar: vLessons, vazifalar: vHomework, lugat: vVocab, jadval: vSchedule, tolov: vPay, fayllar: vFiles, savol: vAsk, profil: vProfile,
+        yutuqlar: function (el) { A.GameUI.portalView(el, { card: card }); } }[cur];
       fn(view);
       if (A.I18N && A.I18N.apply) { try { A.I18N.apply(view); } catch (e) { } }
     }
@@ -308,6 +313,7 @@
           h('span', { class: 'sp-eyebrow' }, 'Assalomu alaykum'),
           h('h1', {}, first ? first + '!' : 'Xush kelibsiz!'),
           h('p', { class: 'sp-hero-me' }, st.name + ' · kod ' + st.code),
+          GAME ? gameChip() : null,
           h('p', {}, 'Bugun ham bir qadam: darsni davom ettiring, vazifani yuboring — keyingi dars o’zi ochiladi.')
         ]),
         heroR
@@ -388,16 +394,29 @@
         items.forEach(function (x) { todo.appendChild(x); });
       }).catch(function (e) { fail(heroR, e); UI.clear(todo); });
     }
+    function gameChip() {
+      var c = h('button', { type: 'button', class: 'gm-chip', hidden: true, onclick: function () { go('yutuqlar'); } });
+      if (D.mode === 'server') A.GameUI.homeChip(c);
+      return c;
+    }
     /* Kurssiz markaz uchun bosh sahifa: davomat, vazifa, keyingi dars, to'lov */
     function vHomeLms(el) {
       var heroR = h('div', { class: 'sp-hero-r' });
+      var nxHero = upcoming(groups, 1)[0];
       var ap = att.percent != null ? att.percent : (att.total ? Math.round((att.attended || 0) * 100 / att.total) : 0);
       heroR.appendChild(h('div', { class: 'sp-ring', style: '--p:' + ap }, [h('b', {}, ap + '%'), h('span', {}, 'davomat')]));
+      heroR.appendChild(h('div', { class: 'sp-hero-next' }, [
+        h('span', {}, nxHero ? 'Keyingi dars' : 'Davomat'),
+        h('b', {}, nxHero ? whenLabel(nxHero) : ((att.attended || 0) + ' / ' + (att.total || 0) + ' dars')),
+        h('span', {}, nxHero ? nxHero.g.name : (att.missed ? att.missed + ' ta dars qoldirilgan' : 'Barakalla, birorta ham qoldirilmagan!')),
+        GAME ? h('button', { class: 'btn sp-cta', type: 'button', onclick: function () { go('yutuqlar'); } }, 'Yutuqlarim →') : null
+      ]));
       el.appendChild(h('section', { class: 'sp-hero' }, [
         h('div', { class: 'sp-hero-l' }, [
           h('span', { class: 'sp-eyebrow' }, 'Assalomu alaykum'),
           h('h1', {}, first ? first + '!' : 'Xush kelibsiz!'),
           h('p', { class: 'sp-hero-me' }, st.name + ' · kod ' + st.code),
+          GAME ? gameChip() : null,
           h('p', {}, 'Darslarga qatnashing, vazifani o’z vaqtida bajaring — natija o’zi keladi.')
         ]),
         heroR

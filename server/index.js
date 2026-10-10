@@ -23,6 +23,7 @@ const quiz = require('./quiz');
 const progress = require('./progress');
 const seo = require('./seo');
 const SITE = require('./site-content');
+const game = require('./game');
 const MARKAZ = require('./markaz').CONF;
 const MOD = require('./markaz').on;
 const parents = require('./parents');
@@ -1376,6 +1377,22 @@ async function guardWrite(user, p, method, next) {
     return { data };
   }
 
+  /* --- Davomat yozuvi: faqat ma'lum maydonlar (gamifikatsiya belgilari ham) --- */
+  if (col === 'lessons' && method === 'PUT' && next && next.items && typeof next.items === 'object') {
+    const ST = ['keldi', 'kelmadi', 'kechikdi', 'sababli'];
+    Object.keys(next.items).forEach(date => {
+      const att = next.items[date] && next.items[date].attendance;
+      if (!att || typeof att !== 'object') return;
+      Object.keys(att).forEach(mid => {
+        const v = att[mid];
+        if (!v || typeof v !== 'object') return;
+        if (v.status && ST.indexOf(v.status) < 0) delete v.status;
+        if (v.hw != null && v.hw !== 'ha' && v.hw !== 'yoq') delete v.hw;
+        if (v.faol != null) v.faol = v.faol === true;
+      });
+    });
+  }
+
   /* --- Davomat: o'qituvchi faqat o'ziga biriktirilgan guruhga --- */
   if (col === 'lessons' && user.role === 'oqituvchi') {
     const gid = String(seg[1] || '').split('__')[0];
@@ -1755,6 +1772,7 @@ async function handleApi(req, res, url) {
     }
     const sum = await kabinet.summary(store, st);
     sum.hasOwnPassword = !!(await store.get('kabpass/' + st.id));
+    sum.gameOn = MOD('gamifikatsiya') && game.conf((await store.get('meta/settings')) || {}).enabled;
     return send(res, 200, Object.assign({ csrf: ses.csrf, kind: 'student' }, sum));
   }
 
@@ -1804,6 +1822,28 @@ async function handleApi(req, res, url) {
       ? (Array.isArray(ses.studentIds) ? ses.studentIds.map(String) : [])
       : [String(ses.studentId)];
     function allowStudent(sid) { return mine.indexOf(String(sid)) >= 0; }
+
+    /* ---- Gamifikatsiya: XP, daraja, tanga, nishonlar, guruh reytingi ---- */
+    if (sub === 'game' && req.method === 'GET') {
+      const gconf = game.conf((await store.get('meta/settings')) || {});
+      if (!gconf.enabled) return send(res, 200, { enabled: false });
+      const sid = String(url.searchParams.get('studentId') || mine[0] || '');
+      if (!allowStudent(sid)) return send(res, 403, { error: 'Bu o’quvchi sizga tegishli emas.' });
+      const r = await game.forStudent(store, sid, { course: MOD('onlaynKurs'), ym: A.thisMonth() });
+      return send(res, 200, Object.assign({ enabled: true, canOrder: !isParent }, r));
+    }
+    if (sub === 'game/order' && req.method === 'POST') {
+      if (isParent) return send(res, 403, { error: 'Sovg‘ani o‘quvchining o‘zi tanlaydi.' });
+      const gconf = game.conf((await store.get('meta/settings')) || {});
+      if (!gconf.enabled) return send(res, 404, { error: 'Gamifikatsiya yoqilmagan.' });
+      const body = await readBody(req);
+      const r = await withLock('game:' + mine[0], () => game.order(store, mine[0], body.rewardId, { stamp, course: MOD('onlaynKurs') }));
+      if (!r.ok) {
+        return send(res, 400, { error: r.reason === 'tanga' ? 'Tangangiz yetarli emas.' : r.reason === 'takror' ? 'Bu sovg‘a so‘rovingiz ko‘rib chiqilmoqda.' : 'Sovg‘a topilmadi.' });
+      }
+      try { await require('./bot').notifyStaff('🎁 Sovg‘a so‘rovi: ' + r.rec.name + ' (' + r.rec.cost + ' tanga). ERP → Sozlamalar → Gamifikatsiya.'); } catch (e) { }
+      return send(res, 200, { ok: true, order: r.rec });
+    }
 
     /* ---- O'quv sahifasi: vazifa, test, savol, material ---- */
     if (sub === 'learning' && req.method === 'GET') {
@@ -2740,6 +2780,54 @@ async function handleApi(req, res, url) {
       return send(res, 200, { ok: true });
     }
     return send(res, 404, { error: 'Topilmadi.' });
+  }
+
+  /* ---- Gamifikatsiya (xodimlar uchun) ---- */
+  if (route === 'game/group' && req.method === 'GET') {
+    if (!A.can(user, 'group.view')) return nope();
+    const gid = String(url.searchParams.get('id') || '');
+    if (!await ownsGroup(gid)) return nope('Bu guruh sizga tegishli emas.');
+    return send(res, 200, await game.forGroup(store, gid, { course: MOD('onlaynKurs'), ym: A.thisMonth() }));
+  }
+  if (route === 'game/student' && req.method === 'GET') {
+    if (!A.can(user, 'student.view')) return nope();
+    const sid = String(url.searchParams.get('id') || '');
+    if (user.role === 'oqituvchi' && !(await teacherScope(user)).sid[sid]) return nope('Bu o‘quvchi sizga tegishli emas.');
+    return send(res, 200, await game.studentStats(store, sid, { course: MOD('onlaynKurs'), ym: A.thisMonth() }));
+  }
+  if (route === 'game/bonus' && req.method === 'POST') {
+    if (!A.can(user, 'attendance.mark') && !A.can(user, 'lesson.log')) return nope();
+    const body = await readBody(req);
+    if (user.role === 'oqituvchi' && !(await teacherScope(user)).sid[String(body.studentId || '')]) return nope('Bu o‘quvchi sizga tegishli emas.');
+    const r = await game.addBonus(store, body, { byUserId: user.id, byName: user.name || user.login, stamp });
+    if (!r.ok) {
+      return send(res, 400, { error: r.reason === 'xp' ? 'Ball −' + game.BONUS_MAX + '…+' + game.BONUS_MAX + ' oralig‘ida bo‘lsin.' : r.reason === 'sabab' ? 'Sababini yozing.' : 'O‘quvchi topilmadi.' });
+    }
+    await writeAudit(user, 'Gamifikatsiya: rag‘bat', r.rec.studentId, (r.rec.xp > 0 ? '+' : '') + r.rec.xp + ' XP · ' + r.rec.reason);
+    return send(res, 200, { ok: true, bonus: r.rec });
+  }
+  if (route === 'game/orders' && req.method === 'GET') {
+    if (!A.can(user, 'settings.edit') && !A.can(user, 'student.edit')) return nope();
+    const rows = (await store.list('gameorder/')).map(r => r.data).filter(Boolean)
+      .sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 200);
+    for (const o of rows) {
+      const st = await store.get('students/' + o.studentId);
+      o.studentName = st ? ((st.lastName || '') + ' ' + (st.firstName || '')).trim() : o.studentId;
+    }
+    return send(res, 200, { orders: rows });
+  }
+  if (route === 'game/order/status' && req.method === 'POST') {
+    if (!A.can(user, 'settings.edit') && !A.can(user, 'student.edit')) return nope();
+    const body = await readBody(req);
+    const o = await store.get('gameorder/' + String(body.id || ''));
+    if (!o) return send(res, 404, { error: 'Topilmadi.' });
+    const st = String(body.status || '');
+    if (['berildi', 'rad'].indexOf(st) < 0) return send(res, 400, { error: 'Holat noto‘g‘ri.' });
+    if (o.status !== 'kutilmoqda') return send(res, 400, { error: 'Bu so‘rov allaqachon ko‘rib chiqilgan.' });
+    o.status = st; o.closedBy = user.name || user.login; o.closedAt = stamp();
+    await store.set('gameorder/' + o.id, o);
+    await writeAudit(user, 'Gamifikatsiya: sovg‘a ' + (st === 'berildi' ? 'berildi' : 'rad etildi'), o.name, o.cost + ' tanga');
+    return send(res, 200, { ok: true, order: o });
   }
 
   /* ---- Karta to'lovlari: botdagi da'volar va bank bildirishnomalari ---- */

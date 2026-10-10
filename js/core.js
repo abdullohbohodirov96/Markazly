@@ -547,8 +547,50 @@
     }
   };
 
+  /* ---------------- Markaz sozlamasi (markaz.json) ----------------
+     index.html ichida window.MARKAZ bo'lib keladi (build.js yozadi).
+     mod(nom)  — modul yoqilganmi (sozlama bo'lmasa — hammasi yoqiq);
+     S(kalit, standart) — sayt matni: markaz.json → sayt.<kalit>, bo'lmasa standart.
+       Qiymat {uz, ru, en, ar} ko'rinishida bo'lsa, tarjimalar ham qo'shiladi.  */
+  function markazConf() { return global.MARKAZ || null; }
+  function mod(name) {
+    var m = markazConf();
+    if (!m || !m.modullar) return true;
+    return m.modullar[name] === true;
+  }
+  function trText(v, def) {
+    if (v == null || v === '') return def;
+    if (typeof v === 'object' && !Array.isArray(v)) {
+      var uz = v.uz || def;
+      if (global.A && global.A.I18N && global.A.I18N.add && uz) {
+        global.A.I18N.add(uz, [v.ru || uz, v.en || uz, v.ar || uz]);
+      }
+      return uz;
+    }
+    return String(v);
+  }
+  function siteText(key, def) {
+    var m = markazConf();
+    var v = m && m.sayt ? m.sayt[key] : null;
+    if (Array.isArray(def)) {
+      if (!Array.isArray(v) || !v.length) return def;
+      return v.map(function (x, i) {
+        if (x && typeof x === 'object' && !x.uz && !Array.isArray(x)) {
+          var o = {}; Object.keys(x).forEach(function (k) { o[k] = trText(x[k], (def[i] || {})[k] || ''); }); return o;
+        }
+        return trText(x, def[i] || '');
+      });
+    }
+    if (def && typeof def === 'object') {
+      if (!v || typeof v !== 'object') return def;
+      var o = {}; Object.keys(def).forEach(function (k) { o[k] = v[k] != null ? v[k] : def[k]; }); return o;
+    }
+    return trText(v, def);
+  }
+
   global.A = global.A || {};
   Object.assign(global.A, {
+    markaz: markazConf, mod: mod, S: siteText,
     TZ_OFFSET_MIN: TZ_OFFSET_MIN,
     tzNow: tzNow, today: today, nowStamp: nowStamp, toISODate: toISODate,
     nowTime: nowTime, hm: hm, lessonPhase: lessonPhase, lessonOrder: lessonOrder,

@@ -230,7 +230,7 @@
   /* =============== TO'LOVLAR =============== */
   function localReceiptNo(ym) {
     var n = Fin.monthItems('payments', ym).filter(function (p) { return p.type !== 'refund'; }).length + 1;
-    return 'ALB-' + ym.replace('-', '') + '-' + String(n).padStart(4, '0');
+    return ((global.MARKAZ && global.MARKAZ.ish && global.MARKAZ.ish.chekPrefiksi) || 'MRK') + '-' + ym.replace('-', '') + '-' + String(n).padStart(4, '0');
   }
 
   /**

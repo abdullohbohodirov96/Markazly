@@ -1589,6 +1589,16 @@
 
     locale: function () { return LOCALE[this.lang] || LOCALE.uz; },
 
+    /** Markazga xos matn uchun tarjima qo'shish (markaz.json dan) */
+    add: function (uz, arr) {
+      if (!uz || !arr) return;
+      T[uz] = arr;
+      if (this.map && this.lang !== 'uz') {
+        var idx = { ru: 0, en: 1, ar: 2 }[this.lang];
+        this.map[uz] = arr[idx];
+      }
+    },
+
     /** Sana/oy/kun nomlarini tanlangan tilga o'tkazish */
     applyLocale: function () {
       var A = global.A;
@@ -1659,7 +1669,7 @@
       if (!/[A-Za-zЀ-ӿ]/.test(t)) return true;          // faqat raqam/belgi
       if (/^\+?\d[\d\s\-()]{5,}$/.test(t)) return true;           // telefon
       if (/^[A-Z]\d{3}$/.test(t)) return true;                    // guruh kodi
-      if (/^ALB-\d/.test(t)) return true;                         // chek raqami
+      if (/^[A-Z]{2,6}-\d{6}-\d/.test(t)) return true;                         // chek raqami
       if (/^[A-ZА-Я؀-ۿ]{1,3}$/.test(t)) return true;    // avatar harflari
       if (/^[a-z0-9_.@-]+$/.test(t)) return true;                 // login, fayl nomi
       if (/^\d{4}-\d{2}(-\d{2})?( \d{2}:\d{2})?$/.test(t)) return true; // sana

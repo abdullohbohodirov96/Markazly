@@ -115,7 +115,7 @@ async function loginAndOpenMenu(page) {
   if (!logged) {
     await page.waitForSelector('#login-user', { state: 'visible', timeout: 20000 });
     await page.fill('#login-user', 'admin');
-    await page.fill('#login-pass', 'hayottalim.123');
+    await page.fill('#login-pass', 'namuna.2026');
     await page.click('button[type=submit]');
   }
   await page.waitForSelector('#app:not([hidden])', { timeout: 20000 });

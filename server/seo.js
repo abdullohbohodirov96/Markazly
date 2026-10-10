@@ -34,7 +34,7 @@ function escapeHtml(value) {
   })[ch]);
 }
 
-const DEFAULT_ORIGIN = 'https://arab-markaz.onrender.com';
+const DEFAULT_ORIGIN = require('./markaz').CONF.sayt.url || 'http://localhost';
 
 /** Bitta muhit o'zgaruvchisidan to'g'ri manzil o'qish */
 function fromEnv(name) {
@@ -125,7 +125,7 @@ function render(html, settings, host) {
   /* Sarlavha: odam nimani qidirsa, shu oldinda tursin — "arab tili
      kurslari Toshkentda". Markaz nomi oxirida. 60 belgidan oshmaydi,
      shuning uchun Google uni kesib tashlamaydi.                      */
-  const title = name === SITE_NAME ? CONTENT.TITLE : name + ' — arab tili kurslari, onlayn va offline';
+  const title = name === SITE_NAME ? CONTENT.TITLE : name + ' — ' + require('./markaz').CONF.sohasi;
 
   /* Tavsif: ixcham (~155 belgi), faqat haqiqiy ma'lumot. Manzil va
      telefon bu yerda takrorlanmaydi — ular tuzilgan ma'lumotda va
@@ -153,10 +153,10 @@ function render(html, settings, host) {
     image: url + 'assets/icon-512.png',
     address: {
       '@type': 'PostalAddress', streetAddress: address,
-      addressLocality: 'Toshkent', addressCountry: 'UZ'
+      addressLocality: CONTENT.CITY, addressCountry: 'UZ'
     },
     areaServed: { '@type': 'Country', name: 'O‘zbekiston' },
-    knowsLanguage: ['ar', 'uz', 'ru'],
+    knowsLanguage: require('./markaz').CONF.ish.tillar,
     sameAs
   };
   const oh = hours(s.workStart, s.workEnd);
@@ -175,14 +175,7 @@ function render(html, settings, host) {
         alternateName: ALT_NAMES.filter(x => x !== name),
         inLanguage: 'uz', publisher: { '@id': url + '#markaz' }
       },
-      {
-        '@type': 'Course',
-        name: 'Arab tili kurslari — A1 dan C2 gacha',
-        description: 'Noldan boshlab 1 yilda: arabcha matnni tushunib o‘qish va erkin suhbat. Ayollar, erkaklar va bolalar uchun alohida guruhlarda jonli onlayn darslar.',
-        inLanguage: 'uz', teaches: 'Arab tili',
-        about: { '@type': 'Language', name: 'Arab tili', alternateName: 'اللغة العربية' },
-        provider: { '@id': url + '#markaz' }
-      },
+      CONTENT.courseLd(url + '#markaz'),
       CONTENT.faqLd()
     ]
   }).replace(/</g, '\\u003c');

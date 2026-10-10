@@ -8,7 +8,7 @@
   var A = global.A;
   var UI = A.UI, h = UI.h, D = A.Data;
 
-  var NAV = [
+  var NAV_ALL = [
     { id: 'asosiy', label: 'Asosiy', icon: 'home', mob: true },
     { id: 'darslar', label: 'Darslarim', icon: 'play', mob: true },
     { id: 'vazifalar', label: 'Uy vazifalarim', short: 'Vazifalar', icon: 'task', mob: true },
@@ -159,6 +159,15 @@
   /* =================== Portal =================== */
   function render(root, d, opts) {
     opts = opts || {};
+    /* Onlayn kurs moduli o'chiq bo'lsa (markaz.json) — "Darslarim" va "Lug'at" bo'limlari yo'q,
+       uy vazifasi va testlar guruh darslaridan (LMS) olinadi. */
+    var COURSE = A.mod ? A.mod('onlaynKurs') : true;
+    var GAME = A.mod ? A.mod('gamifikatsiya') : false;
+    var NAV = NAV_ALL.filter(function (n) {
+      if (!COURSE && (n.id === 'darslar' || n.id === 'lugat')) return false;
+      if (!GAME && n.id === 'yutuqlar') return false;
+      return true;
+    });
     var src = makeSource(d);
     if (A.Speak) A.Speak.loadMap();
     var st = d.student, fin = d.finance || {}, att = d.attendance || {};
@@ -207,7 +216,7 @@
       UI.clear(side);
       side.appendChild(h('div', { class: 'sp-brand' }, [
         h('img', { src: A.LOGO || '', alt: '' }),
-        h('div', {}, [h('b', {}, opts.centerName || 'Sabo Academy'), h('span', {}, 'O’quvchi kabineti')])
+        h('div', {}, [h('b', {}, opts.centerName || ((global.MARKAZ || {}).nom) || ''), h('span', {}, 'O’quvchi kabineti')])
       ]));
       side.appendChild(h('div', { class: 'sp-nav' }, NAV.map(function (n) {
         return h('button', {
@@ -292,6 +301,7 @@
 
     /* ---------- 1. Asosiy ---------- */
     function vHome(el) {
+      if (!COURSE) return vHomeLms(el);
       var heroR = h('div', { class: 'sp-hero-r' }, loading());
       el.appendChild(h('section', { class: 'sp-hero' }, [
         h('div', { class: 'sp-hero-l' }, [
@@ -377,6 +387,43 @@
         if (!items.length) items.push(h('p', { class: 'sp-muted' }, 'Hammasi bajarilgan. Barakalla!'));
         items.forEach(function (x) { todo.appendChild(x); });
       }).catch(function (e) { fail(heroR, e); UI.clear(todo); });
+    }
+    /* Kurssiz markaz uchun bosh sahifa: davomat, vazifa, keyingi dars, to'lov */
+    function vHomeLms(el) {
+      var heroR = h('div', { class: 'sp-hero-r' });
+      var ap = att.percent != null ? att.percent : (att.total ? Math.round((att.attended || 0) * 100 / att.total) : 0);
+      heroR.appendChild(h('div', { class: 'sp-ring', style: '--p:' + ap }, [h('b', {}, ap + '%'), h('span', {}, 'davomat')]));
+      el.appendChild(h('section', { class: 'sp-hero' }, [
+        h('div', { class: 'sp-hero-l' }, [
+          h('span', { class: 'sp-eyebrow' }, 'Assalomu alaykum'),
+          h('h1', {}, first ? first + '!' : 'Xush kelibsiz!'),
+          h('p', { class: 'sp-hero-me' }, st.name + ' · kod ' + st.code),
+          h('p', {}, 'Darslarga qatnashing, vazifani o’z vaqtida bajaring — natija o’zi keladi.')
+        ]),
+        heroR
+      ]));
+      var nx = upcoming(groups, 1)[0];
+      var tiles = h('div', { class: 'sp-tiles' });
+      el.appendChild(tiles);
+      var tHw = tile('task', 'Vazifalar', '…', 'vazifalar');
+      var tNext = tile('calendar', 'Keyingi dars', nx ? whenLabel(nx).split(' · ')[0] : '—', 'jadval', nx ? (nx.g.startTime || '') : 'jadval yo’q');
+      var tPay = fin.debt > 0
+        ? tile('wallet', 'To’lov', som(fin.debt), 'tolov', fin.overdue > 0 ? 'qarz' : 'to’lov kuni', fin.overdue > 0 ? 'bad' : '')
+        : tile('wallet', 'To’lov', 'Qarz yo’q', 'tolov', '', 'ok');
+      var tAtt = tile('check', 'Davomat', ap + '%', 'asosiy', att.total ? (att.attended || 0) + ' / ' + att.total + ' dars' : '');
+      [tAtt, tHw, tNext, tPay].forEach(function (t) { tiles.appendChild(t.node); });
+      var grid = h('div', { class: 'sp-grid2' });
+      el.appendChild(grid);
+      var colL = h('div', { class: 'sp-col' }), colR = h('div', { class: 'sp-col' });
+      grid.appendChild(colL); grid.appendChild(colR);
+      colL.appendChild(card('Guruhlarim', [groupsBlock()], { action: h('button', { class: 'sp-link', onclick: function () { go('jadval'); } }, 'Jadval →') }));
+      colR.appendChild(card('Davomat', [attBlock()]));
+      if (src.learning) {
+        load('learning').then(function (lv) {
+          var hw = lv.homework || [], qz = (lv.quizzes || []).filter(function (q) { return !q.done; });
+          tHw.set(String(hw.length + qz.length), qz.length ? qz.length + ' ta test kutmoqda' : 'oxirgi vazifalar', qz.length ? 'warn' : '');
+        }).catch(function () { tHw.set('—', ''); });
+      }
     }
     function tile(icon, label, value, target, hint, cls) {
       var v = h('b', {}, value), hn = h('span', {}, hint || '');
@@ -469,6 +516,10 @@
     /* ---------- 3. Uy vazifalarim ---------- */
     var hwFilter = 'hammasi';
     function vHomework(el) {
+      if (!COURSE) {
+        el.appendChild(card('Uy vazifalari va testlar', [opts.learnSection ? opts.learnSection(st.id, true) : h('p', { class: 'sp-muted' }, 'Hozircha vazifa yo’q.')]));
+        return;
+      }
       var bar = h('div', { class: 'sp-chips' });
       var box = h('div', {}, loading());
       el.appendChild(bar); el.appendChild(box);
@@ -975,7 +1026,7 @@
 
     paintNav(); paintTop(); paintView();
     /* Badge uchun kurs ma'lumotini oldindan yuklaymiz */
-    load('course').then(function (cv) {
+    if (COURSE) load('course').then(function (cv) {
       badges.vazifalar = cv.lessons.filter(function (l) { return hwState(l).id === 'qayta'; }).length;
       badges.lugat = (cv.vocab ? cv.vocab.due + cv.vocab.fresh : 0) + (cv.reviews || []).filter(function (r) { return r.status === 'open'; }).length;
       paintBadges();

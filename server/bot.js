@@ -70,12 +70,14 @@ const PAY_BTN = 'To’lov qilish 💳';
 const PAID_BTN = 'To’ladim ✅';
 const BACK_BTN = 'Orqaga';
 const PAY_KB = [[{ text: PAID_BTN }], [{ text: BACK_BTN }]];
+const MODON = require('./markaz').on;
+/* Menyu markaz modullariga qarab: to'lov boti va veb-kabinet o'chiq bo'lsa tugmasi ham yo'q */
 const MENU = [
-  [{ text: PAY_BTN }],
+  MODON('tolovBoti') ? [{ text: PAY_BTN }] : null,
   [{ text: 'Ma’lumotim' }, { text: 'To’lovim' }],
   [{ text: 'Davomatim' }, { text: 'Jadvalim' }],
-  [{ text: 'Kabinet (veb)' }, { text: 'Markazga yozish' }]
-];
+  MODON('kabinet') ? [{ text: 'Kabinet (veb)' }, { text: 'Markazga yozish' }] : [{ text: 'Markazga yozish' }]
+].filter(Boolean);
 
 /* ---------------- Ma'lumot yordamchilari ---------------- */
 async function settings() {
@@ -187,7 +189,7 @@ async function balanceText(student) {
   if (bal.debt > 0) {
     lines.push('Qarz: <b>' + A.som(bal.debt) + ' so’m</b>');
     if (overdue > 0) lines.push('Shundan muddati o’tgan: ' + A.som(overdue) + ' so’m');
-    lines.push('To’lash uchun «' + PAY_BTN + '» tugmasini bosing.');
+    if (MODON('tolovBoti')) lines.push('To’lash uchun «' + PAY_BTN + '» tugmasini bosing.');
   } else if (bal.advance > 0) {
     lines.push('Avans: ' + A.som(bal.advance) + ' so’m');
   } else {
@@ -453,7 +455,7 @@ async function remindDebtors(todayIso) {
       for (const inv of soon) {
         const text = 'Eslatma: ' + A.monthLabel(inv.month) + ' uchun to’lov muddati — ' + A.dateLabel(inv.dueDate) + '.\n' +
           'Summa: ' + A.som(A.invoiceRemaining(inv, paid)) + ' so’m\n' +
-          'To’lash uchun «' + PAY_BTN + '» tugmasini bosing — karta raqami va aniq summa chiqadi.';
+          (MODON('tolovBoti') ? 'To’lash uchun «' + PAY_BTN + '» tugmasini bosing — karta raqami va aniq summa chiqadi.' : 'To’lovni markazga keltirishingiz mumkin.');
         const r = await enqueue({
           studentId: s.id, chatId: String(s.telegram.id), text, kind: 'qarz',
           dedupeKey: 'oldin:' + inv.id
@@ -974,7 +976,7 @@ const ADMIN_MENU = [[{ text: ADM_SEND }, { text: ADM_ADD }], [{ text: ADM_STATUS
 const ADM_CANCEL_KB = [[{ text: ADM_CANCEL }]];
 
 function siteBase() {
-  return String(process.env.PUBLIC_URL || process.env.SITE_URL || process.env.RENDER_EXTERNAL_URL || 'https://hayottalim.uz').replace(/\/$/, '');
+  return String(process.env.PUBLIC_URL || process.env.SITE_URL || process.env.RENDER_EXTERNAL_URL || require('./markaz').CONF.sayt.url || '').replace(/\/$/, '');
 }
 function quizPreview(q) {
   return '<b>' + esc(q.question) + '</b>\n' +
@@ -1225,7 +1227,7 @@ async function onMessage(msg) {
     st = { chatId: String(chatId), step: 'code', codeTries: 0, leadId: st.leadId || undefined };
     await setState(chatId, st);
     await sendMessage(chatId,
-      conf.welcome + '\n\nMen ' + esc((await settings()).centerName || 'Sabo Academy') + ' yordamchisiman 🤖 ' +
+      conf.welcome + '\n\nMen ' + esc((await settings()).centerName || require('./markaz').CONF.nom) + ' yordamchisiman 🤖 ' +
       'Kurslar, darslar vaqti, tekin dars va daraja testi haqidagi <b>savolingizni yozing</b> — darhol javob beraman.\n\n' +
       '🎁 Birinchi dars tekin — «' + REG_BTN + '» tugmasini bosing.\n' +
       '🎓 Markaz o’quvchisi bo’lsangiz — «' + STUDENT_BTN + '» (administrator bergan havola orqali ulanasiz).',
@@ -1364,7 +1366,7 @@ async function quizConf() {
   const b = ((await settings()).bot) || {};
   return {
     on: b.quizOn !== false,
-    channel: String(b.quizChannel || process.env.QUIZ_CHANNEL || '@SaboAcademy').trim(),
+    channel: String(b.quizChannel || process.env.QUIZ_CHANNEL || '').trim(),
     /* Shu sanadan (Toshkent vaqti) boshlab yuboriladi */
     start: /^\d{4}-\d{2}-\d{2}$/.test(String(b.quizStart || '')) ? b.quizStart : (process.env.QUIZ_START || '2026-10-10'),
     slots: QUIZ_SLOTS
@@ -1430,6 +1432,7 @@ async function sendQuiz(q, channel) {
 }
 /** Har 5 daqiqada: vaqti kelgan slot bo'lsa — bitta savol yuboradi */
 async function quizTick(nowMs) {
+  if (!MODON('kanalViktorina')) return { sent: 0, off: true };
   const conf = await quizConf();
   if (!conf.on || !conf.channel) return { sent: 0 };
   const now = tashkentNow(nowMs);
@@ -1484,6 +1487,7 @@ async function nextDueText(student) {
   return '';
 }
 async function payStart(chatId, student) {
+  if (!MODON('tolovBoti')) return sendMessage(chatId, 'To’lov markazda qabul qilinadi.', MENU);
   const conf = paybot.payConf(await settings());
   if (!conf.card) {
     return sendMessage(chatId, 'Karta orqali to’lov hali sozlanmagan. Markaz administratoriga murojaat qiling.', MENU);
@@ -1538,6 +1542,7 @@ async function confirmClaim(claim, tx) {
 }
 /** Bank bildirishnomasi keldi (kanal yoki guruh) */
 async function onBankPost(chat, msg) {
+  if (!MODON('tolovBoti')) return false;
   const conf = paybot.payConf(await settings());
   if (!paybot.isBankChat(conf, chat)) return false;
   /* Guruhda xabarni istalgan a'zo yozishi mumkin — shuning uchun guruhdan faqat
@@ -1691,7 +1696,7 @@ function botProfileTexts(name) {
 }
 async function syncBotProfile() {
   const s = (await store.get('meta/settings')) || {};
-  const t = botProfileTexts(String(s.centerName || process.env.APP_NAME || 'Sabo Academy'));
+  const t = botProfileTexts(String(s.centerName || require('./markaz').CONF.nom));
   const curName = await tg('getMyName', {}).catch(() => null);
   if (curName && curName.name !== t.name) await tg('setMyName', { name: t.name });
   const curDesc = await tg('getMyDescription', {}).catch(() => null);

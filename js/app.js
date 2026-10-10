@@ -131,19 +131,19 @@
     { id: 'attendance', label: 'Davomat', icon: 'check', perm: 'nav.attendance' },
     { id: 'curriculum', label: 'O’quv dasturi', icon: 'layers', perm: 'nav.curriculum' },
     { id: 'learning', label: 'Dars jarayoni', icon: 'task', perm: 'lesson.log' },
-    { id: 'course', label: 'Onlayn kurs', icon: 'play', perm: 'lesson.log' },
+    { id: 'course', label: 'Onlayn kurs', icon: 'play', perm: 'lesson.log', mod: 'onlaynKurs' },
     { id: 'finance', label: 'Moliya', icon: 'wallet', perm: 'nav.finance' },
     { id: 'staff', label: 'Xodimlar', icon: 'badge', perm: 'nav.staff' },
     { id: 'reports', label: 'Hisobotlar', icon: 'chart', perm: 'nav.reports' },
     { id: 'progress', label: 'O’quv natijalari', icon: 'chart', perm: 'reports.learning' },
     { id: 'chat', label: 'Suhbat', icon: 'chat', perm: 'nav.chat' },
     { id: 'tasks', label: 'Vazifalar', icon: 'task', perm: 'nav.tasks' },
-    { id: 'bot', label: 'Telegram bot', icon: 'bot', perm: 'nav.bot' },
+    { id: 'bot', label: 'Telegram bot', icon: 'bot', perm: 'nav.bot', mod: 'telegramBot' },
     { id: 'settings', label: 'Sozlamalar', icon: 'gear', perm: 'settings.edit' }
   ];
 
   function allowedNav() {
-    return NAV.filter(function (n) { return App.can(n.perm); });
+    return NAV.filter(function (n) { return App.can(n.perm) && (!n.mod || A.mod(n.mod)); });
   }
 
   function renderNav() {
@@ -260,7 +260,7 @@
   /* Markaz nomi: avval serverdagi nom, bo'lmasa brauzerdagi nusxa, oxirida standart.
      Eski nusxa qolib ketmasin uchun server nomi kelganda yangilanadi. */
   function centerNameNow() {
-    return (D.settings && D.settings.centerName) || 'Sabo Academy';
+    return (D.settings && D.settings.centerName) || (A.markaz() || {}).nom || 'O‘quv markazi';
   }
   async function refreshCenterName() {
     try {
@@ -384,6 +384,7 @@
   }
 
   function renderKabinet(prefill) {
+    if (!A.mod('kabinet')) { try { history.replaceState(null, '', location.pathname); } catch (e) { } return renderLanding(); }
     if (dupView('kabinet')) return;
     leaveSite();
     hidePreRender();
@@ -623,6 +624,7 @@
         centerName: centerNameNow(),
         openCourse: function () { location.hash = 'kurs'; openCourse(); },
         runQuiz: runQuiz,
+        learnSection: learnSection,
         logout: async function () {
           if (D.mode !== 'server') { try { sessionStorage.removeItem('kab_local'); } catch (e) { } err.hidden = true; portalOn(false); showForm(); return; }
           try { await D.api('POST', 'api/kabinet/logout', {}); } catch (e) { }
@@ -853,6 +855,7 @@
   /* Onlayn kurs sahifasi (#kurs). Serverda — kabinet sessiyasi bilan.
      Demo (brauzer) rejimida — namunaviy o'quvchi nomidan. */
   function openCourse() {
+    if (!A.mod('onlaynKurs')) { try { history.replaceState(null, '', location.pathname); } catch (e) { } return A.mod('kabinet') ? renderKabinet() : renderLanding(); }
     if (dupView('kurs')) return;
     leaveSite();
     if (!A.renderCourse) return;
@@ -940,6 +943,7 @@
      darajani o'zboshimchalik bilan yozib bo'lmaydi.
      Uch til: o'zbek, rus, arab (arabchada sahifa o'ngdan chapga). */
   function renderTest() {
+    if (!A.mod('darajaTesti')) { try { history.replaceState(null, '', location.pathname); } catch (e) { } return renderLanding(); }
     if (dupView('test')) return;
     leaveSite();
     hidePreRender();
@@ -1247,7 +1251,7 @@
     function all(c) { try { return D.all(c) || []; } catch (e) { return []; } }
     function lines(v) { return String(v || '').split('\n').map(function (x) { return x.trim(); }).filter(Boolean); }
     return {
-      centerName: s.centerName || 'Sabo Academy',
+      centerName: s.centerName || (A.markaz() || {}).nom || '',
       phone: String(s.phone || ''), address: String(s.address || ''),
       workStart: String(s.workStart || ''), workEnd: String(s.workEnd || ''),
       about: String(s.about || ''),
@@ -1616,6 +1620,8 @@
      kabi) kodda yozilmaydi. Ular Sozlamalardan keladi va bo'sh bo'lsa
      bo'lim umuman ko'rinmaydi — saytda tekshirilmagan gap turmasin.   */
   function renderLanding() {
+    /* Sayt moduli o'chiq bo'lsa — bosh sahifa o'rniga darrov kirish oynasi */
+    if (!A.mod('sayt')) return renderLogin(null);
     if (dupView('landing')) return;
     hidePreRender();
     document.getElementById('boot').hidden = true;
@@ -1628,6 +1634,9 @@
     if (A._ctaOff) { A._ctaOff(); A._ctaOff = null; }
 
     var name = centerNameNow();
+    /* Hero doskasi va belgilari — markaz.json → sayt.heroDoska / heroBelgilar */
+    var DOSKA = A.S('heroDoska', { darsNomi: 'Arab tili · 12-dars', katta: 'كِتَابٌ', kichik: 'kitābun — kitob', harflar: ['ك', 'ت', 'ا', 'ب'] });
+    var HBEL = A.S('heroBelgilar', ['Har dars yozib olinadi', 'Ayollar · erkaklar · bolalar — alohida']);
 
     /* Ishonch qatoridagi odam siluetlari. Bu CHIZMA — haqiqiy odamning
        surati emas va yuz chizilmaydi: faqat bosh va yelka.
@@ -1698,32 +1707,32 @@
         h('img', { class: 'logo', src: LOGO, alt: '' }),
         h('div', {}, [
           h('b', { id: 'site-name' }, name),
-          h('span', {}, 'Xorijiy tillar markazi')
+          h('span', {}, ((A.markaz() || {}).sohasi) || 'Xorijiy tillar markazi')
         ])
       ]),
       burger,
       h('nav', { class: 'site-nav', id: 'site-nav' }, [
         navBtn('Darajalar', 'bosqichlar'),
         navBtn('Ustozlar', 'ustozlar'),
-        h('a', { class: 'site-phone', id: 'site-call', href: 'tel:+998509999733', onclick: function () { A.track('phone_click', { place: 'menu' }); } },
+        h('a', { class: 'site-phone', id: 'site-call', href: 'tel:' + String(((A.markaz() || {}).aloqa || {}).telefon || '').replace(/[^+0-9]/g, ''), onclick: function () { A.track('phone_click', { place: 'menu' }); } },
           [UI.icon('phone'), h('span', { id: 'site-call-text' }, 'Bog’lanish')]),
         h('button', {
           class: 'btn sm gold nav-free', type: 'button',
           onclick: function () { closeMenu(); goFreeLesson(); }
         }, 'Tekin darsga yozilish'),
-        h('button', {
+        A.mod('darajaTesti') ? h('button', {
           class: 'btn sm ghost', type: 'button',
           onclick: function () { location.hash = 'test'; renderTest(); }
-        }, [UI.icon('task'), 'Daraja testi']),
-        h('button', {
+        }, [UI.icon('task'), 'Daraja testi']) : null,
+        A.mod('kabinet') ? h('button', {
           class: 'btn sm', type: 'button',
           onclick: function () { location.hash = 'kabinet'; renderKabinet(); }
-        }, [UI.icon('card'), 'O’quvchi kabineti']),
+        }, [UI.icon('card'), 'O’quvchi kabineti']) : null,
         h('button', {
           class: 'btn sm primary', type: 'button',
           onclick: function () { location.hash = 'kirish'; renderLogin(null); }
         }, [UI.icon('person'), 'Kirish'])
-      ])
+      ].filter(Boolean))
     ]);
     var top = h('header', { class: 'site-top' }, topIn);
     /* Menyu tashqarisiga bosilsa, Esc yoki havola bosilsa — yopiladi */
@@ -1752,26 +1761,26 @@
     var hero = h('section', { class: 'site-hero' }, [
       heroBadge,
       h('div', { class: 'hero-text' }, [
-        h('span', { class: 'hero-eyebrow' }, 'Arab tili kurslari · onlayn va offline'),
+        h('span', { class: 'hero-eyebrow' }, A.S('heroEyebrow', 'Arab tili kurslari · onlayn va offline')),
         h('h1', {}, [h('span', { class: 'gold', id: 'site-name-hero' }, name)]),
         h('div', { class: 'hero-type' }, [
           h('span', { class: 'hero-type-txt', id: 'hero-type-txt' }, ''),
           h('span', { class: 'hero-type-cur', 'aria-hidden': 'true' })
         ]),
         h('div', { class: 'hero-rule', 'aria-hidden': 'true' }),
-        h('p', { class: 'hero-lead', id: 'site-about' },
+        h('p', { class: 'hero-lead', id: 'site-about' }, A.S('heroLead',
           'Birinchi darsdanoq jonli muloqot: xorijiy tilda ravon o’qiysiz, tushunasiz va erkin gapirasiz. ' +
-          'Online va offline darslar, ayollar, erkaklar va bolalar uchun alohida guruhlar, har bir dars yozuvi — aniq reja va aniq natija.'),
+          'Online va offline darslar, ayollar, erkaklar va bolalar uchun alohida guruhlar, har bir dars yozuvi — aniq reja va aniq natija.')),
         h('div', { class: 'hero-cta' }, [
           h('button', {
             class: 'btn gold xl', type: 'button', id: 'hero-free-btn',
             onclick: function () { goFreeLesson(); }
           }, [h('span', {}, 'Tekin darsga yozilish'), goIcon()]),
-          h('button', {
+          A.mod('darajaTesti') ? h('button', {
             class: 'btn on-dark lg', type: 'button',
             onclick: function () { location.hash = 'test'; renderTest(); }
-          }, ['Darajangizni bepul aniqlang', goIcon()])
-        ]),
+          }, ['Darajangizni bepul aniqlang', goIcon()]) : null
+        ].filter(Boolean)),
         /* Ishonch qatori. Doiralardagi shakllar — CHIZILGAN siluetlar,
            haqiqiy odamlarning surati EMAS: biz o'quvchilarning suratini
            saytga qo'ymaymiz. Yuz ham chizilmaydi — faqat bosh va yelka.
@@ -1785,7 +1794,7 @@
           h('span', { class: 'proof-text', id: 'hero-proof-text' }, '')
         ]),
         h('div', { class: 'hero-meta' }, [
-          h('a', { class: 'hero-tel', id: 'hero-tel', href: 'tel:+998509999733' },
+          h('a', { class: 'hero-tel', id: 'hero-tel', href: 'tel:' + String(((A.markaz() || {}).aloqa || {}).telefon || '').replace(/[^+0-9]/g, '') },
             [UI.icon('phone'), h('span', { id: 'hero-tel-text' }, '')]),
           h('span', { class: 'hero-hours', id: 'hero-hours', hidden: true })
         ])
@@ -1798,14 +1807,14 @@
         h('div', { class: 'zm' }, [
           h('div', { class: 'zm-top' }, [
             h('span', { class: 'zm-live' }, 'JONLI'),
-            h('span', { class: 'zm-title' }, 'Arab tili · 12-dars'),
+            h('span', { class: 'zm-title' }, DOSKA.darsNomi),
             h('span', { class: 'zm-time' }, '00:34:12')
           ]),
           h('div', { class: 'zm-body' }, [
             h('div', { class: 'zm-board' }, [
-              h('div', { class: 'zm-ar' }, 'كِتَابٌ'),
-              h('div', { class: 'zm-tr' }, 'kitābun — kitob'),
-              h('div', { class: 'zm-letters' }, ['ك', 'ت', 'ا', 'ب'].map(function (l) { return h('span', {}, l); }))
+              h('div', { class: 'zm-ar' }, DOSKA.katta),
+              h('div', { class: 'zm-tr' }, DOSKA.kichik),
+              h('div', { class: 'zm-letters' }, (DOSKA.harflar || []).map(function (l) { return h('span', {}, l); }))
             ]),
             h('div', { class: 'zm-side' }, ['Ustoz', 'Madina', 'Zarina', 'Nodira'].map(function (n, i) {
               return h('div', { class: 'zm-tile' + (i === 0 ? ' host' : '') }, [
@@ -1816,8 +1825,8 @@
           ]),
           h('div', { class: 'zm-bar' }, [h('i'), h('i'), h('i', { class: 'end' })])
         ]),
-        h('div', { class: 'zm-chip c1' }, [UI.icon('play'), 'Har dars yozib olinadi']),
-        h('div', { class: 'zm-chip c2' }, [UI.icon('users'), 'Ayollar · erkaklar · bolalar — alohida'])
+        h('div', { class: 'zm-chip c1' }, [UI.icon('play'), HBEL[0]]),
+        h('div', { class: 'zm-chip c2' }, [UI.icon('users'), HBEL[1]])
       ])
     ]);
 
@@ -1832,14 +1841,14 @@
     }
     var roadmap = h('section', { class: 'site-sec reveal rm-sec', id: 'natija' }, [
       h('div', { class: 'sec-eyebrow' }, 'Natija yo’li'),
-      h('h2', {}, 'Noldan 1 yilda — qadam-baqadam'),
-      h('p', { class: 'sec-note' }, 'Har bir bosqichda nimani o’rganishingiz oldindan ma’lum. Sakrab o’tish yo’q.'),
-      h('div', { class: 'rm-line' }, [
-        stepCard('1', '1-oy', 'Harflar va o’qish', 'Arab alifbosi, harakatlar, so’zlarni bo’g’inlab o’qish.'),
-        stepCard('2', '3-oy', 'Ravon o’qish', 'To’g’ri talaffuz, harakatlar va matnlarni xatosiz, ravon o’qish.'),
-        stepCard('3', '6-oy', 'Ma’noni tushunish', 'Asosiy grammatika va 1000 ta ko’p uchraydigan so’z.'),
-        stepCard('4', '12-oy', 'Arabcha gaplashish', 'Kundalik suhbat, matn o’qib tushunish, A2–B1 daraja.')
-      ])
+      h('h2', {}, A.S('natijaSarlavha', 'Noldan 1 yilda — qadam-baqadam')),
+      h('p', { class: 'sec-note' }, A.S('natijaIzoh', 'Har bir bosqichda nimani o’rganishingiz oldindan ma’lum. Sakrab o’tish yo’q.')),
+      h('div', { class: 'rm-line' }, A.S('natijaBosqichlar', [
+        { qachon: '1-oy', nomi: 'Harflar va o’qish', matn: 'Arab alifbosi, harakatlar, so’zlarni bo’g’inlab o’qish.' },
+        { qachon: '3-oy', nomi: 'Ravon o’qish', matn: 'To’g’ri talaffuz, harakatlar va matnlarni xatosiz, ravon o’qish.' },
+        { qachon: '6-oy', nomi: 'Ma’noni tushunish', matn: 'Asosiy grammatika va 1000 ta ko’p uchraydigan so’z.' },
+        { qachon: '12-oy', nomi: 'Arabcha gaplashish', matn: 'Kundalik suhbat, matn o’qib tushunish, A2–B1 daraja.' }
+      ]).map(function (b, i) { return stepCard(String(i + 1), b.qachon, b.nomi, b.matn); }))
     ]);
 
     /* ---------- Dars qanday o'tadi: 3 qadam ---------- */
@@ -1853,9 +1862,11 @@
       h('div', { class: 'sec-eyebrow' }, 'Qanday ishlaydi'),
       h('h2', {}, 'Boshlash uchun 3 qadam'),
       h('div', { class: 'how-grid' }, [
-        howCard('play', '01', 'Tekin darsga yoziling', 'Telegram bot orqali 1 daqiqada. Jonli ochiq darsda usulimizni ko’rasiz.'),
-        howCard('users', '02', 'Guruhga qo’shiling', 'Haftada 3 marta Zoom’da jonli dars. Guruhda 10 kishigacha — ayollar, erkaklar va bolalar alohida.'),
-        howCard('check', '03', 'Har kuni o’sing', 'Dars yozuvlari, uy vazifasi va ustoz izohlari — hammasi kabinetingizda.')
+        A.S('qadamlar', [
+          { nomi: 'Tekin darsga yoziling', matn: 'Telegram bot orqali 1 daqiqada. Jonli ochiq darsda usulimizni ko’rasiz.' },
+          { nomi: 'Guruhga qo’shiling', matn: 'Haftada 3 marta Zoom’da jonli dars. Guruhda 10 kishigacha — ayollar, erkaklar va bolalar alohida.' },
+          { nomi: 'Har kuni o’sing', matn: 'Dars yozuvlari, uy vazifasi va ustoz izohlari — hammasi kabinetingizda.' }
+        ]).slice(0, 3).map(function (q, i) { return howCard(['play', 'users', 'check'][i], '0' + (i + 1), q.nomi, q.matn); })
       ])
     ]);
 
@@ -1916,29 +1927,29 @@
         h('div', { class: 'why-art' }, [
           khatamSvg('khatam-in'),
           h('div', { class: 'why-art-in' }, [
-            h('span', { class: 'why-ar', 'aria-hidden': 'true' }, 'العربية'),
+            h('span', { class: 'why-ar', 'aria-hidden': 'true' }, A.S('negaBizBelgi', 'العربية')),
             h('img', { src: LOGO, alt: '' }),
             h('div', { class: 'why-badge' }, [
-              h('b', { id: 'why-badge-v' }, 'A1–C2'),
+              h('b', { id: 'why-badge-v' }, A.S('negaBizNishon', 'A1–C2')),
               h('span', {}, 'to’liq dastur')
             ])
           ])
         ]),
         h('div', { class: 'why-text' }, [
           h('div', { class: 'sec-eyebrow' }, 'Nega biz'),
-          h('h2', {}, 'Uydan chiqmasdan, tajribali ustoz bilan'),
-          h('p', { class: 'sec-note' },
+          h('h2', {}, A.S('negaBizSarlavha', 'Uydan chiqmasdan, tajribali ustoz bilan')),
+          h('p', { class: 'sec-note' }, A.S('negaBizMatn',
             'Darslar jonli: ustozni ko’rasiz, savol berasiz, xatoingiz o’sha zahoti ' +
             'tuzatiladi. Dars qoldirsangiz — yozuvi Telegram guruhda turadi. ' +
-            'Noldan boshlab bir yilda arabcha matnni tushunib o’qish va erkin suhbatga yetasiz.'),
-          h('ul', { class: 'why-list' }, [
-            whyRow('Ayollar, erkaklar va bolalar uchun alohida guruhlar'),
-            whyRow('Haftada 3 marta jonli Zoom dars, har biri 80 daqiqa'),
-            whyRow('Har bir dars yozib olinadi — qoldirsangiz ham ortda qolmaysiz'),
-            whyRow('Kichik guruh: 10 kishigacha, har biriga vaqt yetadi'),
-            whyRow('Butun O’zbekiston va chet eldan qatnashish mumkin'),
-            whyRow('Uy vazifasi, davomat va to’lov — shaxsiy kabinetda')
-          ]),
+            'Noldan boshlab bir yilda arabcha matnni tushunib o’qish va erkin suhbatga yetasiz.')),
+          h('ul', { class: 'why-list' }, A.S('negaBizRoyxat', [
+            'Ayollar, erkaklar va bolalar uchun alohida guruhlar',
+            'Haftada 3 marta jonli Zoom dars, har biri 80 daqiqa',
+            'Har bir dars yozib olinadi — qoldirsangiz ham ortda qolmaysiz',
+            'Kichik guruh: 10 kishigacha, har biriga vaqt yetadi',
+            'Butun O’zbekiston va chet eldan qatnashish mumkin',
+            'Uy vazifasi, davomat va to’lov — shaxsiy kabinetda'
+          ]).map(whyRow)),
           h('button', {
             class: 'btn primary lg', type: 'button',
             onclick: function () { scrollTo('ustozlar'); }
@@ -1955,10 +1966,10 @@
     var levelsSec = h('section', { class: 'site-sec reveal', id: 'bosqichlar' }, [
       h('div', { class: 'sec-mid' }, [
         h('div', { class: 'sec-eyebrow center' }, 'O’quv dasturi'),
-        h('h2', {}, 'Bitta dastur — olti daraja'),
-        h('p', { class: 'sec-note center' },
+        h('h2', {}, A.S('darajalarSarlavha', 'Bitta dastur — olti daraja')),
+        h('p', { class: 'sec-note center' }, A.S('darajalarIzoh',
           'Guruhlar daraja bo’yicha tuziladi: ayollar, erkaklar va bolalar alohida o’qiydi. ' +
-          'Qaysi darajadan boshlashni bepul test bir necha daqiqada aniqlaydi.')
+          'Qaysi darajadan boshlashni bepul test bir necha daqiqada aniqlaydi.'))
       ]),
       lvlGrid
     ]);
@@ -1975,9 +1986,9 @@
           h('div', { class: 'sec-eyebrow' }, 'Ustozlar'),
           h('h2', {}, 'Darsni kim olib boradi')
         ]),
-        h('p', { class: 'sec-note' },
+        h('p', { class: 'sec-note' }, A.S('ustozlarIzoh',
           'Darslarni tajribali ustozlar olib boradi. Noldan boshlovchilar bilan ' +
-          'ishlashni biladi: har bir harf va qoidani sabr bilan, tushunarli qilib o’rgatadi.')
+          'ishlashni biladi: har bir harf va qoidani sabr bilan, tushunarli qilib o’rgatadi.'))
       ]),
       teachBox
     ]);
@@ -1987,7 +1998,7 @@
     var timetable = h('section', { class: 'site-sec reveal', id: 'vaqt' }, [
       h('div', { class: 'sec-eyebrow' }, 'Jadval'),
       h('h2', {}, 'Dars vaqtlari'),
-      h('p', { class: 'muted', id: 'slot-lead' }, 'Har bir dars 80 daqiqa, Zoom orqali.'),
+      h('p', { class: 'muted', id: 'slot-lead' }, A.S('darsIzoh', 'Har bir dars 80 daqiqa, Zoom orqali.')),
       slotBox
     ]);
 
@@ -2010,11 +2021,8 @@
       options: [{ value: '', label: 'Farqi yo’q' }]
     });
     /* Hozirgi daraja — uchta tanlov (chip) */
-    var LVL = [
-      { id: 'noldan', label: 'Noldan (alifbo)' },
-      { id: 'oqiy', label: 'O’qiy olaman' },
-      { id: 'gram', label: 'Grammatikani bilaman' }
-    ];
+    var LVL = A.S('darajaVariantlari', ['Noldan (alifbo)', 'O’qiy olaman', 'Grammatikani bilaman'])
+      .map(function (l, i) { return { id: ['noldan', 'oqiy', 'gram', 'orta', 'yuqori'][i] || ('v' + i), label: l }; });
     var lvlPick = '';
     var lvlBox = h('div', { class: 'chip-row' }, LVL.map(function (o) {
       var b = h('button', { class: 'chip', type: 'button' }, o.label);
@@ -2029,7 +2037,7 @@
     /* Daraja kartasidan kelgan tanlov shu yerda ko'rinadi. */
     var lvlPill = h('div', { class: 'lvl-pill', id: 'lead-level-pill', hidden: true });
     var lvlWrap = h('div', { class: 'field full' }, [
-      h('label', {}, 'Hozirgi arab tili darajangiz'), lvlPill, lvlBox
+      h('label', {}, A.S('darajaSavoli', 'Hozirgi arab tili darajangiz')), lvlPill, lvlBox
     ]);
     function clearPill() { lvlPill.hidden = true; UI.clear(lvlPill); }
     A._pickLevel = function (code, label) { pickLevel(code, label); };
@@ -2142,11 +2150,11 @@
           h('button', { class: 'foot-link', type: 'button', onclick: function () { scrollTo('bosqichlar'); } }, 'Darajalar'),
           h('button', { class: 'foot-link', type: 'button', onclick: function () { scrollTo('ustozlar'); } }, 'Ustozlar'),
           h('button', { class: 'foot-link', type: 'button', onclick: function () { scrollTo('vaqt'); } }, 'Dars vaqtlari'),
-          h('button', {
+          A.mod('darajaTesti') ? h('button', {
             class: 'foot-link', type: 'button',
             onclick: function () { location.hash = 'test'; renderTest(); }
-          }, 'Daraja testi')
-        ]),
+          }, 'Daraja testi') : null
+        ].filter(Boolean)),
         h('div', { class: 'foot-col' }, [
           h('b', {}, 'Bog’lanish'),
           h('a', { class: 'foot-link', id: 'foot-phone', href: '#ariza' }, ''),
@@ -2161,15 +2169,15 @@
       h('div', { class: 'foot-bar' }, [
         h('span', {}, '© ' + new Date().getFullYear() + ' ' + name),
         h('div', { class: 'rowflex' }, [
-          h('button', {
+          A.mod('kabinet') ? h('button', {
             class: 'btn sm ghost', type: 'button',
             onclick: function () { location.hash = 'kabinet'; renderKabinet(); }
-          }, 'O’quvchi kabineti'),
+          }, 'O’quvchi kabineti') : null,
           h('button', {
             class: 'btn sm ghost', type: 'button',
             onclick: function () { location.hash = 'kirish'; renderLogin(null); }
           }, 'Xodimlar kirishi')
-        ])
+        ].filter(Boolean))
       ])
     ]);
 
@@ -2337,7 +2345,7 @@
       var pub = A._pub || {};
       var df = (A.Seed && A.Seed.defaults) || {};
       var phone = String(pub.phone || df.phone || '+998 50 999 97 33');
-      var tg = String(pub.tgQabul || pub.tgChannel || df.tgChannel || 'https://t.me/SaboAcademy');
+      var tg = String(pub.tgQabul || pub.tgChannel || df.tgChannel || ((A.markaz() || {}).aloqa || {}).telegramKanal || '');
       if (!/^https?:/.test(tg)) tg = 'https://t.me/' + tg.replace(/^@/, '');
       var row = h('div', { class: 'lead-alt' }, []);
       if (!onlyTg) {
@@ -2935,7 +2943,7 @@
           /* Rahmat → kanalga obuna taklifi → 6 soniyadan keyin kanalga o'tish */
           var pub = A._pub || {};
           var df = (A.Seed && A.Seed.defaults) || {};
-          var chRaw = String(pub.tgChannel || df.tgChannel || 'https://t.me/SaboAcademy');
+          var chRaw = String(pub.tgChannel || df.tgChannel || ((A.markaz() || {}).aloqa || {}).telegramKanal || '');
           var chUrl = /^https?:/.test(chRaw) ? chRaw : 'https://t.me/' + chRaw.replace(/^@/, '');
           var left = 6, timer = null;
           var cnt = h('span', { class: 'lead-ok-count' }, String(left));
@@ -3120,7 +3128,7 @@
       }, [UI.icon('back'), 'Orqaga']),
       h('div', { class: 'site-brand', style: 'margin-inline-start:auto' }, [
         h('img', { class: 'logo', src: LOGO, alt: '' }),
-        h('div', {}, [h('b', {}, centerNameNow()), h('span', {}, 'Arab tili o’quv markazi')])
+        h('div', {}, [h('b', {}, centerNameNow()), h('span', {}, ((A.markaz() || {}).sohasi) || 'Arab tili o’quv markazi')])
       ])
     ]));
 
@@ -3148,7 +3156,7 @@
           h('span', { class: 'hero-eyebrow' }, t.tag || 'Ustoz'),
           h('h1', {}, t.name),
           h('p', { class: 'hero-lead' }, t.bio ||
-            'Markazimizda arab tilidan dars beradi.'),
+            A.S('ustozMatn', 'Markazimizda dars beradi.')),
           h('div', { class: 'tch-facts' }, [
             t.country ? fact('home', 'Davlat', t.country) : null,
             t.levels ? fact('chart', 'Darajalar', t.levels) : null,
@@ -3262,7 +3270,7 @@
     document.getElementById('me-role').textContent = A.ROLES[user.role] || user.role;
     document.getElementById('me-avatar').textContent =
       (user.name || '?').trim().split(/\s+/).map(function (p) { return p[0]; }).slice(0, 2).join('').toUpperCase();
-    document.getElementById('center-name').textContent = (D.settings && D.settings.centerName) || 'Sabo Academy';
+    document.getElementById('center-name').textContent = (D.settings && D.settings.centerName) || (A.markaz() || {}).nom || '';
     var mp = document.getElementById('mode-pill');
     if (D.mode === 'local') { mp.hidden = false; mp.textContent = 'Faqat shu brauzerda'; }
     startLeadWatch();

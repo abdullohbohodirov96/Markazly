@@ -23,7 +23,7 @@ require('fs').mkdirSync(shots, { recursive: true });
   async function login(page) {
     await page.waitForSelector('#login-user', { timeout: 15000 });
     await page.fill('#login-user', 'admin');
-    await page.fill('#login-pass', 'hayottalim.123');
+    await page.fill('#login-pass', 'namuna.2026');
     await page.click('button[type=submit]');
     await page.waitForSelector('#app:not([hidden])', { timeout: 15000 });
     await page.waitForTimeout(600);
@@ -168,7 +168,7 @@ require('fs').mkdirSync(shots, { recursive: true });
   await page.waitForSelector('#login-user', { timeout: 15000 });
   const t0 = Date.now();
   await page.fill('#login-user', 'admin');
-  await page.fill('#login-pass', 'hayottalim.123');
+  await page.fill('#login-pass', 'namuna.2026');
   await page.click('button[type=submit]');
   await page.waitForSelector('#app:not([hidden])', { timeout: 15000 });
   steps.push('Kirish vaqti: ' + (Date.now() - t0) + ' ms');

@@ -23,6 +23,8 @@ const quiz = require('./quiz');
 const progress = require('./progress');
 const seo = require('./seo');
 const SITE = require('./site-content');
+const MARKAZ = require('./markaz').CONF;
+const MOD = require('./markaz').on;
 const parents = require('./parents');
 const course = require('./course');
 
@@ -51,7 +53,7 @@ function pbkdf2(pass, salt, iter) {
 }
 /* Kuchsiz parollar: 10 belgidan qisqa, mashhur, loginning o'zi yoki
    ochiq kodda (repozitoriyda) uchraydigan namuna parollar. */
-const WEAK_PASSWORDS = ['hayottalim.123', 'hayottalim123', 'albyana2026!', '1234', '12345', '123456', '12345678', '123456789',
+const WEAK_PASSWORDS = ['hayottalim.123', 'hayottalim123', 'albyana2026!', 'markazly123', 'markaz123', '1234', '12345', '123456', '12345678', '123456789',
   '1234567890', 'password', 'admin', 'admin123', 'qwerty', 'parol', 'parol123', 'hayottalim', 'hayot123'];
 function isWeakPassword(pass, login) {
   const p = String(pass || '');
@@ -468,50 +470,32 @@ async function ensureSeed() {
     // Darslar 08:00–22:00, har biri 90 daqiqa (eski standart 20:00 edi)
     if (!settings.workEnd || settings.workEnd === '20:00') { settings.workEnd = '22:00'; touched = true; }
     if (!settings.workStart) { settings.workStart = '08:00'; touched = true; }
-    if (!settings.lessonMinutes) { settings.lessonMinutes = 90; touched = true; }
+    if (!settings.lessonMinutes) { settings.lessonMinutes = MARKAZ.ish.darsDaqiqa; touched = true; }
     /* Bir martalik: sayt uchun markazning standart aloqalari va shiorlari.
        Faqat BO'SH maydonlar to'ldiriladi; keyin admin o'zgartirsa yoki
        o'chirsa — shu holicha qoladi (siteDefaults belgisi).            */
     if (!settings.siteDefaults) {
-      if (!settings.phone || settings.phone === '+998 55 999 97 33') settings.phone = SITE.PHONE;
+      if (!settings.phone) settings.phone = SITE.PHONE;
       if (!settings.instagram) settings.instagram = SITE.LINKS[0].url;
       if (!settings.tgChannel) settings.tgChannel = SITE.LINKS[1].url;
       if (!settings.taglines) settings.taglines = SITE.TAGLINES;
       settings.siteDefaults = 1;
       touched = true;
     }
-    /* Bir martalik: markaz nomi "Hayot Ta'lim" dan "Sabo Academy" ga o'tdi.
-       Faqat eski standart qiymatlar almashtiriladi; admin o'zi yozgan
-       boshqa nom yoki havola bo'lsa — tegilmaydi.                      */
-    if (!settings.rebrandSabo) {
-      if (!settings.centerName || /^hayot\s*ta[’'`]?lim$/i.test(String(settings.centerName).trim())) settings.centerName = SITE.NAME;
-      if (!settings.instagram || /instagram\.com\/hayottalim\.uz\/?$/i.test(String(settings.instagram))) settings.instagram = SITE.LINKS[0].url;
-      if (settings.bot && typeof settings.bot.welcome === 'string') {
-        settings.bot = Object.assign({}, settings.bot, { welcome: settings.bot.welcome.replace(/Hayot\s*Ta[’'`]?lim/gi, SITE.NAME) });
-      }
-      settings.rebrandSabo = 1;
-      touched = true;
-    }
-    /* Telegram kanal ham yangi nomga: @Hayot_talim → @SaboAcademy */
-    if (!settings.rebrandSaboTg) {
-      if (!settings.tgChannel || /t\.me\/hayot_talim\/?$|^@?hayot_talim$/i.test(String(settings.tgChannel).trim())) settings.tgChannel = SITE.LINKS[1].url;
-      if (settings.bot && /^@?hayot_talim$/i.test(String(settings.bot.quizChannel || '').trim())) {
-        settings.bot = Object.assign({}, settings.bot, { quizChannel: '@SaboAcademy' });
-      }
-      settings.rebrandSaboTg = 1;
-      touched = true;
-    }
     if (touched) await store.set('meta/settings', settings);
   }
   if (!settings) {
+    /* Birinchi ishga tushishda markaz sozlamasi markaz.json dan olinadi */
     await store.set('meta/settings', {
-      centerName: process.env.APP_NAME || 'Sabo Academy',
-      address: '', phone: SITE.PHONE, workStart: '08:00', workEnd: '22:00', lessonMinutes: 80, dueDay: 5,
-      instagram: SITE.LINKS[0].url, tgChannel: SITE.LINKS[1].url, taglines: SITE.TAGLINES, siteDefaults: 1,
+      centerName: MARKAZ.nom,
+      address: MARKAZ.aloqa.manzil, phone: SITE.PHONE,
+      workStart: MARKAZ.ish.boshlanish, workEnd: MARKAZ.ish.tugash, lessonMinutes: MARKAZ.ish.darsDaqiqa, dueDay: MARKAZ.ish.tolovKuni,
+      instagram: MARKAZ.aloqa.instagram, tgChannel: MARKAZ.aloqa.telegramKanal, tgQabul: MARKAZ.aloqa.telegramQabul,
+      facebook: MARKAZ.aloqa.facebook, taglines: SITE.TAGLINES, siteDefaults: 1,
       expenseCategories: ['Ijara', 'Kommunal', 'Reklama', 'Jihozlar', 'Xo’jalik', 'Ish haqi', 'Boshqa'],
       bot: {
         username: process.env.TELEGRAM_BOT_USERNAME || '',
-        welcome: 'Assalomu alaykum! ' + (process.env.APP_NAME || 'Sabo Academy') + ' botiga xush kelibsiz.',
+        welcome: 'Assalomu alaykum! ' + MARKAZ.nom + ' botiga xush kelibsiz.',
         notifyAttendance: true, notifyPayment: true, notifyDebt: true, autoApprove: false
       },
       createdAt: stamp()
@@ -683,7 +667,7 @@ async function nextReceiptNo(ym) {
     const m = String(data.receiptNo || '').match(/-(\d+)$/);
     if (m) max = Math.max(max, Number(m[1]));
   });
-  return 'ALB-' + ym.replace('-', '') + '-' + String(max + 1).padStart(4, '0');
+  return MARKAZ.ish.chekPrefiksi + '-' + ym.replace('-', '') + '-' + String(max + 1).padStart(4, '0');
 }
 
 /* Pul qiymati: butun, musbat, cheksiz emas va me'yordan katta emas.
@@ -1066,7 +1050,7 @@ async function kabLogin(login, pw) {
   if (digits.length === kabinet.CODE_LEN) {
     cands = students.filter(s => String(s.code || '') === digits);
     if (!cands.length) {
-      const par = await parents.byCode(store, digits);
+      const par = MOD('otaOna') ? await parents.byCode(store, digits) : null;
       if (par && String(pw).trim() === digits) return { parent: par };
     }
   } else if (digits.length >= 9) {
@@ -1595,6 +1579,21 @@ async function handleApi(req, res, url) {
 
   if (route === 'health') return send(res, 200, { ok: true, mode: store.kind });
 
+  /* ---------- Modullar (markaz.json → modullar) ----------
+     O'chirilgan modulning API yo'llari umuman javob bermaydi (404). */
+  {
+    const off = (name) => !MOD(name);
+    const blocked =
+      (off('darajaTesti') && /^test\//.test(route)) ||
+      (off('kabinet') && (route === 'kabinet' || route.indexOf('kabinet/') === 0)) ||
+      (off('otaOna') && /^parent(\/|$)/.test(route)) ||
+      (off('onlaynKurs') && (/^course\//.test(route) || /^kabinet\/course(\/|$)/.test(route) || /^(lesson-video|qissa-audio)/.test(route))) ||
+      (off('kanalViktorina') && /^kanal-quiz/.test(route)) ||
+      (off('tolovBoti') && /^paybank/.test(route)) ||
+      (off('gamifikatsiya') && (/^game(\/|$)/.test(route) || /^kabinet\/game(\/|$)/.test(route)));
+    if (blocked) return send(res, 404, { error: 'Bu bo‘lim shu markazda yoqilmagan.' });
+  }
+
   /* ---------- O'quvchi kabineti: shaxsiy kod bo'yicha kirish ----------
      Markaz rahbari shu yo'lni tanladi: o'quvchi faqat 4 xonali kodini
      yozadi va kabinetiga kiradi.
@@ -1666,7 +1665,7 @@ async function handleApi(req, res, url) {
     /* Kod o'quvchiniki bo'lmasa — ota-ona kodimi? Ota-onaning kodi o'zinikidir,
        farzandining kodi emas; shuning uchun kodlar bir-biri bilan to'qnashmaydi. */
     if (!student) {
-      const par = await parents.byCode(store, code);
+      const par = MOD('otaOna') ? await parents.byCode(store, code) : null;
       if (par) {
         kabinetOk(ip);
         const ses = await kabsess.create(store, {
@@ -2182,7 +2181,7 @@ async function handleApi(req, res, url) {
   }
 
   if (route === 'public' && req.method === 'GET') {
-    const out = { centerName: process.env.APP_NAME || 'Sabo Academy' };
+    const out = { centerName: MARKAZ.nom };
     try {
       const s = (await store.get('meta/settings')) || {};
       if (s.centerName) out.centerName = String(s.centerName);
@@ -3843,7 +3842,7 @@ const server = http.createServer({ connectionsCheckingInterval: 5000 }, async (r
   server.keepAliveTimeout = 65 * 1000;
   server.maxHeadersCount = 100;
   server.listen(PORT, () => {
-    console.log('\n  ' + (process.env.APP_NAME || 'Sabo Academy') + ' ERP ishga tushdi: http://localhost:' + PORT);
+    console.log('\n  ' + MARKAZ.nom + ' ERP ishga tushdi: http://localhost:' + PORT);
     console.log('  Ombor: ' + store.kind + (store.file ? ' (' + store.file + ')' : ''));
   });
   // Kunlik avtomatik zaxira; xato bo'lsa direktorga xabar qoldiriladi
@@ -3859,7 +3858,7 @@ const server = http.createServer({ connectionsCheckingInterval: 5000 }, async (r
 
   /* Bot modulini doim tayyorlaymiz — token bo'lmasa ham ERP dan karta to'lovini tasdiqlash ishlaydi */
   require('./bot').init({ store, stamp, A, recordPayment: autoCardPayment });
-  if (process.env.TELEGRAM_BOT_TOKEN) {
+  if (process.env.TELEGRAM_BOT_TOKEN && MOD('telegramBot')) {
     require('./bot').start({ store, stamp, A, recordPayment: autoCardPayment });
   } else {
     console.log('  Telegram bot o’chirilgan (TELEGRAM_BOT_TOKEN berilmagan).\n');

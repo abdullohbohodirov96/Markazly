@@ -6,7 +6,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const src = fs.readFileSync(path.join(__dirname, 'artifact.html'), 'utf8');
+const src = fs.readFileSync(path.join(__dirname, 'artifact.html'), 'utf8')
+  .split('{{NOM}}').join(require('./server/markaz').CONF.nom.replace(/[<>&"]/g, ''))
+  .split('{{SOHA}}').join(require('./server/markaz').CONF.sohasi.replace(/[<>&"]/g, ''));
 
 // <title>, <link> va <style> teglarini <head> ga ko'chiramiz
 const headTags = [];
@@ -28,7 +30,8 @@ const body = src.replace(/^[\s\S]*?(?=<div id="boot")/, function (top) {
    SITE_URL — saytning asosiy manzili. O'z domeningiz bo'lsa, uni shu yerga
    yozing (yoki SITE_URL muhit o'zgaruvchisida bering): havolalar, canonical
    va sitemap shunga qarab tuziladi.                                        */
-const SITE_URL = (process.env.SITE_URL || 'https://hayottalim.uz')
+const MARKAZ = require('./server/markaz');
+const SITE_URL = (process.env.SITE_URL || MARKAZ.CONF.sayt.url || 'http://localhost:3000')
   .replace(/\/+$/, '');
 const CONTENT = require('./server/site-content');
 const SITE_NAME = CONTENT.NAME;
@@ -173,6 +176,27 @@ const GA_TAG = !GA_ID ? '' : `
 </script>
 `;
 
+/* ---------------- Markaz rangi (markaz.json → rang.asosiy) ----------------
+   Bitta asosiy rangdan butun palitra hosil qilinadi: to'q (yon menyu),
+   och, juda och fon va tungi rejim uchun yorqinroq varianti.          */
+function hexToRgb(h) { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function rgbToHex(r) { return '#' + r.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join(''); }
+function mix(h, to, t) { const a = hexToRgb(h), b = hexToRgb(to); return rgbToHex(a.map((v, i) => v + (b[i] - v) * t)); }
+const BASE = MARKAZ.CONF.rang.asosiy;
+const PAL = {
+  brand: BASE, deep: mix(BASE, '#000000', 0.35), light: mix(BASE, '#ffffff', 0.18), soft: mix(BASE, '#ffffff', 0.88),
+  dBrand: mix(BASE, '#ffffff', 0.38), dDeep: mix(BASE, '#ffffff', 0.55), dLight: mix(BASE, '#ffffff', 0.46),
+  dSoft: mix(BASE, '#151b27', 0.78), dActive: mix(BASE, '#151b27', 0.45)
+};
+const DARK_VARS = `--brand:${PAL.dBrand};--brand-deep:${PAL.dDeep};--brand-light:${PAL.dLight};--brand-soft:${PAL.dSoft};--side-active-bg:${PAL.dActive}`;
+const colorTag = `<style id="markaz-rang">
+:root{--brand:${PAL.brand};--brand-deep:${PAL.deep};--brand-light:${PAL.light};--brand-soft:${PAL.soft};--side-bg:${PAL.deep};--side-active-ink:${PAL.deep}}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){${DARK_VARS}}}
+:root[data-theme="dark"]{${DARK_VARS}}
+</style>`;
+/* Brauzer uchun markaz sozlamasining OCHIQ qismi (maxfiy narsa yo'q) */
+const markazTag = '<script>window.MARKAZ = ' + JSON.stringify(MARKAZ.publicConf()).replace(/</g, '\\u003c') + ';</script>';
+
 const head = `<!doctype html>
 <html lang="uz">
 <head>
@@ -180,7 +204,7 @@ const head = `<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">${GA_TAG}
 <title>${SITE_TITLE}</title>
 <meta name="description" content="${SITE_DESC}">
-<meta name="theme-color" content="#0B4A2E">
+<meta name="theme-color" content="${PAL.deep}">
 <link rel="canonical" href="${SITE_URL}/">
 <meta name="robots" content="index, follow, max-image-preview:large">
 
@@ -191,7 +215,7 @@ const head = `<!doctype html>
 <link rel="icon" type="image/png" sizes="48x48" href="/assets/icon-48.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/icon-180.png">
-<meta name="msapplication-TileColor" content="#0B4A2E">
+<meta name="msapplication-TileColor" content="${PAL.deep}">
 <meta name="msapplication-TileImage" content="/assets/icon-192.png">
 
 <!-- Havola ulashilganda chiqadigan kartochka (Telegram, Facebook, WhatsApp) -->
@@ -217,6 +241,8 @@ const head = `<!doctype html>
   [hidden]{display:none!important}
 </style>
 ${headTags.join('\n')}
+${colorTag}
+${markazTag}
 </head>
 <body>
 `;
@@ -238,11 +264,11 @@ const LD = {
       logo: { '@type': 'ImageObject', url: SITE_URL + '/assets/icon-512.png', width: 512, height: 512 },
       image: SITE_URL + '/assets/icon-512.png',
       description: SITE_DESC,
-      address: { '@type': 'PostalAddress', addressLocality: 'Toshkent', addressCountry: 'UZ' },
+      address: { '@type': 'PostalAddress', addressLocality: CONTENT.CITY, addressCountry: 'UZ' },
       areaServed: { '@type': 'Country', name: 'O‘zbekiston' },
       telephone: CONTENT.PHONE,
-      knowsLanguage: ['ar', 'uz', 'ru'],
-      sameAs: CONTENT.LINKS.map(l => l.url)
+      knowsLanguage: MARKAZ.CONF.ish.tillar,
+      sameAs: CONTENT.LINKS.map(l => l.url).filter(Boolean)
     },
     {
       /* Google qidiruvdagi SAYT NOMI aynan shu yozuvdan olinadi */
@@ -254,21 +280,7 @@ const LD = {
       inLanguage: 'uz',
       publisher: { '@id': SITE_URL + '/#markaz' }
     },
-    {
-      '@type': 'Course',
-      name: 'Arab tili kurslari — A1 dan C2 gacha',
-      description: 'Noldan boshlab 1 yilda: arabcha matnni tushunib o‘qish va erkin suhbat. Jonli onlayn darslar.',
-      inLanguage: 'uz',
-      teaches: 'Arab tili',
-      about: { '@type': 'Language', name: 'Arab tili', alternateName: 'اللغة العربية' },
-      provider: { '@id': SITE_URL + '/#markaz' },
-      hasCourseInstance: {
-        '@type': 'CourseInstance',
-        courseMode: 'online',
-        courseWorkload: 'PT4H30M',
-        location: { '@type': 'VirtualLocation', url: SITE_URL + '/' }
-      }
-    },
+    CONTENT.courseLd(SITE_URL + '/#markaz'),
     CONTENT.faqLd()
   ]
 };
@@ -284,6 +296,15 @@ if (bodyOut.indexOf('id="seo-prerender"') < 0) throw new Error('index.html: seo 
 const html = head + ldTag + faqTag + bodyOut + '\n</body>\n</html>\n';
 fs.writeFileSync(path.join(__dirname, 'index.html'), html);
 
+/* PWA manifest — markaz nomi va rangi bilan */
+{
+  const man = JSON.parse(fs.readFileSync(path.join(__dirname, 'manifest.webmanifest'), 'utf8'));
+  man.name = SITE_NAME;
+  man.short_name = MARKAZ.CONF.qisqaNom;
+  man.description = SITE_NAME + ' — boshqaruv tizimi';
+  man.theme_color = PAL.deep;
+  fs.writeFileSync(path.join(__dirname, 'manifest.webmanifest'), JSON.stringify(man, null, 2) + '\n');
+}
 console.log('index.html yangilandi (' + headTags.length + ' ta head tegi ko’chirildi).');
 
 /* ---------------- Versiya: fayllar mazmunidan hisoblanadi ----------------

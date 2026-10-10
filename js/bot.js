@@ -488,7 +488,7 @@
         var waiting = items.filter(function (q) { return !q.sentAt; });
         var onF = UI.field({ label: 'Holat', type: 'select', value: conf.on ? '1' : '0',
           options: [{ value: '1', label: 'Yoqilgan — har kuni avtomatik' }, { value: '0', label: 'O’chirilgan' }] });
-        var chF = UI.field({ label: 'Kanal (bot kanalda administrator bo’lishi kerak)', value: conf.channel || '@SaboAcademy', placeholder: '@SaboAcademy' });
+        var chF = UI.field({ label: 'Kanal (bot kanalda administrator bo’lishi kerak)', value: conf.channel || '', placeholder: '@kanal_nomi' });
         var stF = UI.field({ label: 'Boshlanish sanasi', type: 'date', value: conf.start || '' });
         vbox.appendChild(h('div', { class: 'tiles' }, [
           UI.tile({ label: 'Jami savollar', value: items.length }),

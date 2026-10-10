@@ -6,16 +6,16 @@
   async function mkHash(login, pass, salt) {
     return await A.sha256(String(login).toLowerCase() + '::' + pass + '::' + salt);
   }
-  var DEMO_PASS = 'hayottalim.123';
+  var DEMO_PASS = 'namuna.2026';
   function salt() { return Math.random().toString(36).slice(2, 10); }
 
   var DEFAULT_SETTINGS = {
-    centerName: 'Sabo Academy',
+    centerName: ((global.MARKAZ || {}).nom) || 'Namuna o‘quv markazi',
     address: '',
     phone: '+998 50 999 97 33',
     instagram: 'https://www.instagram.com/sabo.academy/',
     facebook: 'https://www.facebook.com/profile.php?id=61595261428849',
-    tgChannel: 'https://t.me/SaboAcademy',
+    tgChannel: '',
     workStart: '08:00',
     workEnd: '22:00',
     lessonMinutes: 80,

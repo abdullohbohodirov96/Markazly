@@ -1,0 +1,155 @@
+{
+  "_izoh": "Markazga tegishli HAMMA narsa shu faylda. Yangi markaz uchun faqat shu fayl, logo (assets/) va .env to'ldiriladi. To'liq yo'riqnoma: YANGI-MARKAZ.md",
+  "nom": "Namuna o‘quv markazi",
+  "qisqaNom": "Namuna",
+  "nomVariantlari": [
+    "Namuna markazi",
+    "Namuna o'quv markazi",
+    "Намуна"
+  ],
+  "sohasi": "Xorijiy tillar markazi",
+  "logoMatn": "",
+  "aloqa": {
+    "telefon": "+998 90 000 00 00",
+    "manzil": "",
+    "shahar": "Toshkent",
+    "instagram": "",
+    "telegramKanal": "",
+    "telegramQabul": "",
+    "facebook": "",
+    "botUsername": ""
+  },
+  "sayt": {
+    "url": "",
+    "sarlavha": "",
+    "tavsif": "",
+    "shiorlar": [
+      "Tilni yodlatmaymiz — gapirtiramiz!",
+      "Online va offline darslar",
+      "Birinchi darsdan jonli muloqot"
+    ],
+    "heroEyebrow": "Til kurslari · onlayn va offline",
+    "heroLead": "Birinchi darsdanoq jonli muloqot: tilni tushunasiz va erkin gapirasiz. Kichik guruhlar, tajribali ustozlar, har bir dars yozuvi — aniq reja va aniq natija.",
+    "heroDoska": {
+      "darsNomi": "Ingliz tili · 12-dars",
+      "katta": "Book",
+      "kichik": "kitob",
+      "harflar": [
+        "B",
+        "o",
+        "o",
+        "k"
+      ]
+    },
+    "heroBelgilar": [
+      "Har dars yozib olinadi",
+      "Kichik guruhlar"
+    ],
+    "natijaSarlavha": "Noldan 1 yilda — qadam-baqadam",
+    "natijaIzoh": "Har bir bosqichda nimani o‘rganishingiz oldindan ma’lum. Sakrab o‘tish yo‘q.",
+    "natijaBosqichlar": [
+      {
+        "qachon": "1-oy",
+        "nomi": "Asoslar",
+        "matn": "Alifbo, talaffuz va eng kerakli so‘zlar."
+      },
+      {
+        "qachon": "3-oy",
+        "nomi": "Ravon o‘qish",
+        "matn": "To‘g‘ri talaffuz va matnlarni xatosiz o‘qish."
+      },
+      {
+        "qachon": "6-oy",
+        "nomi": "Tushunish",
+        "matn": "Asosiy grammatika va 1000 ta ko‘p uchraydigan so‘z."
+      },
+      {
+        "qachon": "12-oy",
+        "nomi": "Erkin gaplashish",
+        "matn": "Kundalik suhbat, matnni tushunib o‘qish, A2–B1 daraja."
+      }
+    ],
+    "qadamlar": [
+      {
+        "nomi": "Tekin darsga yoziling",
+        "matn": "Sayt yoki Telegram bot orqali 1 daqiqada. Ochiq darsda usulimizni ko‘rasiz."
+      },
+      {
+        "nomi": "Guruhga qo‘shiling",
+        "matn": "Haftada 3 marta jonli dars. Guruhda 10 kishigacha."
+      },
+      {
+        "nomi": "Har kuni o‘sing",
+        "matn": "Dars yozuvlari, uy vazifasi va ustoz izohlari — hammasi kabinetingizda."
+      }
+    ],
+    "negaBizSarlavha": "Tajribali ustozlar, aniq natija",
+    "negaBizMatn": "Darslar jonli: savol berasiz, xatoingiz o‘sha zahoti tuzatiladi. Dars qoldirsangiz — yozuvi kabinetingizda turadi.",
+    "negaBizRoyxat": [
+      "Kichik guruh: 10 kishigacha, har biriga vaqt yetadi",
+      "Haftada 3 marta dars, har biri 80 daqiqa",
+      "Har bir dars yozib olinadi — qoldirsangiz ham ortda qolmaysiz",
+      "Uy vazifasi, davomat va to‘lov — shaxsiy kabinetda",
+      "Online va offline guruhlar",
+      "Bepul daraja testi va tekin sinov darsi"
+    ],
+    "negaBizBelgi": "Tillar",
+    "negaBizNishon": "A1–C2",
+    "darajalarSarlavha": "Bitta dastur — olti daraja",
+    "darajalarIzoh": "Guruhlar daraja bo‘yicha tuziladi. Qaysi darajadan boshlashni bepul test bir necha daqiqada aniqlaydi.",
+    "ustozlarIzoh": "Darslarni tajribali ustozlar olib boradi: har bir qoidani sabr bilan, tushunarli qilib o‘rgatadi.",
+    "darsIzoh": "Har bir dars 80 daqiqa.",
+    "darajaSavoli": "Hozirgi darajangiz",
+    "darajaVariantlari": [
+      "Noldan",
+      "Biroz bilaman",
+      "O‘rta daraja"
+    ],
+    "faq": [
+      {
+        "q": "Noldan boshlasam bo‘ladimi?",
+        "a": "Ha. Darslar eng asosidan boshlanadi va bosqichma-bosqich davom etadi."
+      },
+      {
+        "q": "Darslar onlaynmi yoki offlaynmi?",
+        "a": "Ikkalasi ham bor — qulayini tanlaysiz."
+      },
+      {
+        "q": "Darajamni qanday bilaman?",
+        "a": "Saytdagi bepul daraja testini topshiring: natijaga qarab mos guruh tavsiya qilinadi."
+      },
+      {
+        "q": "Tekin dars qanday o‘tadi?",
+        "a": "“Tekin darsga yozilish” tugmasini bosing va raqamingizni qoldiring. Administratorimiz bog‘lanadi."
+      }
+    ]
+  },
+  "rang": {
+    "asosiy": "#16705f"
+  },
+  "ish": {
+    "boshlanish": "08:00",
+    "tugash": "22:00",
+    "darsDaqiqa": 80,
+    "tolovKuni": 5,
+    "chekPrefiksi": "MRK",
+    "tillar": [
+      "uz",
+      "ru",
+      "en",
+      "ar"
+    ]
+  },
+  "modullar": {
+    "sayt": true,
+    "darajaTesti": false,
+    "kabinet": true,
+    "otaOna": true,
+    "gamifikatsiya": true,
+    "onlaynKurs": false,
+    "telegramBot": true,
+    "tolovBoti": false,
+    "kanalViktorina": false,
+    "_izoh": "onlaynKurs, darajaTesti va kanalViktorina hozircha faqat ARAB TILI mazmuni bilan keladi (A1 kurs, savollar bazasi). Boshqa fan uchun ularni o'chiq qoldiring yoki mazmun yozing."
+  }
+}

@@ -4,6 +4,9 @@
 const fs = require('fs');
 const path = require('path');
 
+/* Brauzerdagidek markaz sozlamasi (A.mod, A.S, chek prefiksi) serverda ham */
+globalThis.MARKAZ = require('./markaz').publicConf();
+
 const files = ['core.js', 'model.js', 'course-a1.js', 'qissa-video.js'];
 files.forEach(function (f) {
   const code = fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8');

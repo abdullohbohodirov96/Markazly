@@ -134,7 +134,7 @@ async function summary(store, parent, progress) {
     kind: 'parent',
     parent: { id: parent.id, name: parent.name, code: parent.code, relation: parent.relation || '' },
     children: kids,
-    center: { name: s.centerName || (process.env.APP_NAME || 'Sabo Academy'), phone: s.phone || '' }
+    center: { name: s.centerName || require('./markaz').CONF.nom, phone: s.phone || '' }
   };
 }
 

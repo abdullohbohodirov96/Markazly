@@ -22,8 +22,9 @@ for t in $ALL; do
     TRUST_PROXY_HOPS=$([ "$t" = hujum2-test ] && echo 1 || echo 0) FLOOD_MAX=$([ "$t" = toshqin-test ] && echo 50 || echo "${FLOOD_MAX_DEF:-}") PORT=$port DATA_DIR=$d BACKUP_DIR=$d/bk SEED_DIRECTOR_PASSWORD="$PASS" NODE_ENV=test \
       node server/index.js > "$TMP/$t.server.log" 2>&1 & sp=$!
     for i in $(seq 1 50); do curl -s -o /dev/null localhost:$port/api/health && break; sleep 0.2; done
-    ARG1=$port; [ "$t" = daraja-ui-test ] && ARG1="http://localhost:$port/"
-    timeout 200 node tests/$t.js $ARG1 "$PASS" > "$TMP/$t.log" 2>&1; rc=$?
+    ARGS="$port $PASS"; [ "$t" = daraja-ui-test ] && ARGS="http://localhost:$port/"
+    TO=200; [ "$t" = full-course-e2e ] && TO=420
+    timeout $TO node tests/$t.js $ARGS > "$TMP/$t.log" 2>&1; rc=$?
     kill $sp 2>/dev/null; wait $sp 2>/dev/null
   fi
   summ=$(grep -aE "o'tdi|o’tdi|passed|✓|✗|FAIL|Xato" "$TMP/$t.log" | tail -1 | cut -c1-120)

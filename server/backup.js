@@ -27,11 +27,13 @@ function tsName(prefix) {
     '-' + p(d.getUTCHours()) + p(d.getUTCMinutes()) + p(d.getUTCSeconds()) + '.json';
 }
 
+const SESSION_RE = /^(staffsess|kabsess)\//;
 /** Zaxira ichidagi barcha hujjatlar: { "students/st_1": {...}, ... } */
 async function dumpOf(store) {
   const rows = await store.all();
   const docs = {};
-  rows.forEach(r => { docs[r.path] = r.data; });
+  /* Sessiyalar zaxiraga kirmaydi: tiklanganda eski (bekor qilingan) kirishlar qaytmasin */
+  rows.forEach(r => { if (!SESSION_RE.test(r.path)) docs[r.path] = r.data; });
   return {
     format: FORMAT,
     app: 'albyana-erp',
@@ -198,9 +200,11 @@ async function restore(store, dump) {
   const keep = new Set(Object.keys(v.docs));
   let removed = 0, restored = 0;
   for (const r of now) {
+    if (SESSION_RE.test(r.path)) continue;            // joriy sessiyalar o'z holicha qoladi
     if (!keep.has(r.path)) { await store.del(r.path); removed++; }
   }
   for (const p of Object.keys(v.docs)) {
+    if (SESSION_RE.test(p)) continue;                 // eski zaxiradagi sessiyalar tiklanmaydi
     await store.set(p, v.docs[p]);
     restored++;
   }

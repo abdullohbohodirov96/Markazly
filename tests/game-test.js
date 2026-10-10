@@ -97,6 +97,18 @@ const get = (p, cookie) => req('/api/doc?path=' + encodeURIComponent(p), { cooki
   ok('Tarixda vazifa bor', g1.json.history.some(e => /vazifa/i.test(e.text)));
   eq('kabinet/me: gameOn', (await req('/api/kabinet/me', { cookie: kab.cookie })).json.gameOn, true);
 
+  section('2b. Soxta davomat bilan ball yig‘ib bo‘lmaydi');
+  eq('Noto‘g‘ri manzilli davomat hujjati rad etildi', (await put('lessons/g1__soxta', { items: { [d1]: { attendance: { ms1: { status: 'keldi' } } } } }, teach)).status, 403);
+  eq('Boshqa oy sanasi rad etildi', (await put('lessons/g1__' + ym, { items: { '2020-01-01': { attendance: { ms1: { status: 'keldi' } } } } }, teach)).status, 403);
+  const fut = new Date(Date.now() + 5 * 3600e3 + 40 * 864e5).toISOString().slice(0, 10);
+  eq('Kelajakdagi darsga davomat — yo‘q', (await put('lessons/g1__' + fut.slice(0, 7), { items: { [fut]: { attendance: { ms1: { status: 'keldi', hw: 'ha' } } } } }, teach)).status, 403);
+  const l2 = (await get('lessons/g1__' + ym, dir)).json.data;
+  ok('Kelmagan o‘quvchiga vazifa belgisi yo‘q', l2.items[d2].attendance.ms1.hw === undefined);
+  {
+    const cp = await get('courseprog/s3', teach);
+    ok('Ustoz begona o‘quvchi kurs yozuvini o‘qiy olmaydi', cp.status === 403 || (cp.json && cp.json.data == null), cp.status);
+  }
+
   section('3. Ustoz rag‘bati');
   eq('O‘z o‘quvchisiga +10', (await req('/api/game/bonus', { cookie: teach, body: { studentId: 's1', xp: 10, reason: 'Faol qatnashdi' } })).status, 200);
   eq('Begona guruh o‘quvchisiga — yo‘q', (await req('/api/game/bonus', { cookie: teach, body: { studentId: 's3', xp: 10, reason: 'x x' } })).status, 403);

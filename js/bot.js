@@ -582,9 +582,9 @@
           help: 'Karta SMS/bot bildirishnomalari tushadigan kanal. Botni shu kanalga administrator qilib qo’shing — raqamni bot o’zi yozib yuboradi.'
         },
         {
-          name: 'payBankSenders', label: 'Guruhda bildirishnoma yuboruvchi (Telegram ID, ixtiyoriy)', value: conf.payBankSenders,
+          name: 'payBankSenders', label: 'Guruhda bildirishnoma yuboruvchi (Telegram ID)', value: conf.payBankSenders,
           placeholder: '123456789',
-          help: 'Bildirishnomalar GURUHGA tushsa: faqat bot yozgan xabar to’lov hisoblanadi. Odam yuborishi kerak bo’lsa — uning Telegram ID sini yozing.'
+          help: 'Bildirishnomalar GURUHGA tushsa: faqat shu ID lardan kelgan xabar to’lov hisoblanadi (bank boti yoki sizning ID). Kanal bo’lsa — bo’sh qoldiring.'
         },
         {
           name: 'payLooseMatch', label: 'Dumsiz (yaxlit) summani avtomatik biriktirish', type: 'select',

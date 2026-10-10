@@ -1377,20 +1377,38 @@ async function guardWrite(user, p, method, next) {
     return { data };
   }
 
-  /* --- Davomat yozuvi: faqat ma'lum maydonlar (gamifikatsiya belgilari ham) --- */
-  if (col === 'lessons' && method === 'PUT' && next && next.items && typeof next.items === 'object') {
-    const ST = ['keldi', 'kelmadi', 'kechikdi', 'sababli'];
-    Object.keys(next.items).forEach(date => {
-      const att = next.items[date] && next.items[date].attendance;
-      if (!att || typeof att !== 'object') return;
-      Object.keys(att).forEach(mid => {
-        const v = att[mid];
-        if (!v || typeof v !== 'object') return;
-        if (v.status && ST.indexOf(v.status) < 0) delete v.status;
-        if (v.hw != null && v.hw !== 'ha' && v.hw !== 'yoq') delete v.hw;
-        if (v.faol != null) v.faol = v.faol === true;
-      });
-    });
+  /* --- Davomat hujjati: yo'l faqat lessons/<guruh>__YYYY-MM, kunlar shu oyning
+     haqiqiy sanalari; o'qituvchi kelajakdagi kunga belgi qo'ya olmaydi.
+     Gamifikatsiya belgilari (vazifa, faol) faqat kelgan o'quvchiga.          */
+  if (col === 'lessons' && method === 'PUT') {
+    const key = String(seg[1] || '');
+    const mm = /^([A-Za-z0-9_\-.]+)__(\d{4}-\d{2})$/.exec(key);
+    if (!mm || seg.length !== 2) return no('Davomat hujjati manzili noto‘g‘ri.');
+    if (!(await store.get('groups/' + mm[1]))) return no('Guruh topilmadi.');
+    if (next && next.items && typeof next.items === 'object') {
+      const ST = ['keldi', 'kelmadi', 'kechikdi', 'sababli'];
+      const today = A.today();
+      for (const date of Object.keys(next.items)) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date.slice(0, 7) !== mm[2] || isNaN(Date.parse(date + 'T00:00:00Z')) ||
+          new Date(date + 'T00:00:00Z').toISOString().slice(0, 10) !== date) {
+          return no('Davomatda noto‘g‘ri sana: ' + date.slice(0, 20));
+        }
+        const att = next.items[date] && next.items[date].attendance;
+        if (!att || typeof att !== 'object') continue;
+        const oldAtt = (old && old.items && old.items[date] && old.items[date].attendance) || {};
+        if (user.role === 'oqituvchi' && date > today && JSON.stringify(att) !== JSON.stringify(oldAtt)) {
+          return no('Kelajakdagi dars uchun davomat belgilab bo‘lmaydi.');
+        }
+        Object.keys(att).forEach(mid => {
+          const v = att[mid];
+          if (!v || typeof v !== 'object') return;
+          if (v.status && ST.indexOf(v.status) < 0) delete v.status;
+          const came = v.status === 'keldi' || v.status === 'kechikdi';
+          if (v.hw != null && (!came || (v.hw !== 'ha' && v.hw !== 'yoq'))) delete v.hw;
+          if (v.faol != null) { if (came && v.faol === true) v.faol = true; else delete v.faol; }
+        });
+      }
+    }
   }
 
   /* --- Davomat: o'qituvchi faqat o'ziga biriktirilgan guruhga --- */
@@ -1539,6 +1557,22 @@ async function filterReadDoc(user, p, data) {
     const st = Object.assign({}, data);
     if (st.bot) st.bot = Object.assign({}, st.bot, { token: undefined });
     return st;
+  }
+  /* Ro'yxatda yo'q, lekin maxfiy ma'lumotli kolleksiyalar */
+  if (seg.length === 2 && !(COLLECTIONS.indexOf(col) >= 0)) {
+    if (col === 'courseprog') {
+      if (!A.can(user, 'student.view') && !A.can(user, 'lesson.log')) return false;
+      if (user.role === 'oqituvchi' && !(await teacherScope(user)).sid[seg[1]]) return false;
+      return data;
+    }
+    if (col === 'payclaim' || col === 'banktx') return A.can(user, 'finance.payments') ? data : false;
+    if (col === 'gamebonus' || col === 'gameorder') {
+      if (!A.can(user, 'student.view')) return false;
+      if (user.role === 'oqituvchi' && !(await teacherScope(user)).sid[String(data.studentId)]) return false;
+      return data;
+    }
+    /* Boshqa noma'lum kolleksiya: o'qituvchiga yopiq */
+    if (user.role === 'oqituvchi') return false;
   }
   /* Bootstrap bilan AYNAN bir xil qoida: kolleksiyaga ruxsat + yozuv egaligi */
   if (COLLECTIONS.indexOf(col) >= 0 && seg.length === 2) {
@@ -1921,6 +1955,14 @@ async function handleApi(req, res, url) {
     if (sub === 'question' && req.method === 'POST') {
       if (isParent) return send(res, 403, { error: 'Savolni o’quvchining o’zi beradi.' });
       const body = await readBody(req);
+      {
+        const today = stamp().slice(0, 10);
+        const todayN = (await store.list('questions/')).map(x => x.data)
+          .filter(q => q && String(q.studentId) === String(mine[0]) && String(q.at || '').slice(0, 10) === today).length;
+        if (todayN >= Number(process.env.KAB_QUESTIONS_DAY || 10)) {
+          return send(res, 429, { error: 'Bugun ko‘p savol yubordingiz. Ertaga yana yozishingiz mumkin.' });
+        }
+      }
       const r = await lms.askQuestion(store, {
         groupId: body.groupId, studentId: mine[0], text: body.text, topicId: body.topicId
       }, { stamp });
@@ -2826,6 +2868,7 @@ async function handleApi(req, res, url) {
     if (o.status !== 'kutilmoqda') return send(res, 400, { error: 'Bu so‘rov allaqachon ko‘rib chiqilgan.' });
     o.status = st; o.closedBy = user.name || user.login; o.closedAt = stamp();
     await store.set('gameorder/' + o.id, o);
+    game.invalidate();
     await writeAudit(user, 'Gamifikatsiya: sovg‘a ' + (st === 'berildi' ? 'berildi' : 'rad etildi'), o.name, o.cost + ' tanga');
     return send(res, 200, { ok: true, order: o });
   }
@@ -3075,6 +3118,13 @@ async function handleApi(req, res, url) {
     if (!A.can(user, 'quiz.manage')) return nope();
     const body = await readBody(req);
     if (body.groupId && !await ownsGroup(body.groupId)) return nope('Bu guruh sizga tegishli emas.');
+    /* Mavjud testni tahrirlash: o'qituvchi faqat o'z guruhi testini yoki o'zi yaratganini */
+    if (body.id && user.role === 'oqituvchi') {
+      const oldQ = await store.get('quizzes/' + String(body.id));
+      if (oldQ && !((oldQ.groupId && await ownsGroup(oldQ.groupId)) || (!oldQ.groupId && oldQ.byUserId === user.id))) {
+        return nope('Bu test sizga tegishli emas.');
+      }
+    }
     const r = await quiz.saveQuiz(store, body, { byUserId: user.id, stamp });
     if (!r.ok) {
       const msg = {
@@ -3546,6 +3596,7 @@ async function handleApi(req, res, url) {
       if (!dump) return send(res, 400, { error: 'Zaxira berilmadi.' });
       try {
         const r = await withLock('backup', () => backup.restore(store, dump));
+        sessCache.clear(); game.invalidate();
         await writeAudit(user, 'Ma’lumotlar zaxiradan tiklandi',
           body.name || 'yuklangan fayl', r.restored + ' yozuv tiklandi, ' + r.removed + ' ta olib tashlandi');
         return send(res, 200, r);
@@ -3614,6 +3665,7 @@ async function handleApi(req, res, url) {
         }
       }
       await store.set(p, body.data);
+      if (/^(lessons|memberships|students|meta)\//.test(p)) game.invalidate();
       /* Parol almashsa yoki hisob o'chirilsa — boshqa qurilmalardagi kirishlar yopiladi */
       if (p.indexOf('users/') === 0 && (String(body.password || '') || body.data.active === false)) {
         const uid = p.split('/')[1];

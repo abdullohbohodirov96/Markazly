@@ -111,7 +111,13 @@ function eq4(n, got, want) { ok(n, got === want, 'kutilgan ' + want + ', olindi 
   await B.onBankPost({ id: -100778, type: 'supergroup' }, { from: { id: 555, is_bot: false }, text: 'Пополнение ➕ 350 037.00 UZS *9012', message_id: 13 });
   eq4('Odam yozgan soxta bildirishnoma yozilmadi', (await paybot.listCol(store, 'banktx')).length, before4b);
   await B.onBankPost({ id: -100778, type: 'supergroup' }, { from: { id: 777, is_bot: true }, text: 'Пополнение ➕ 350 038.00 UZS *9012', message_id: 14 });
-  eq4('Bank boti yozgani qabul qilindi', (await paybot.listCol(store, 'banktx')).length, before4b + 1);
+  eq4('Ro‘yxatda yo‘q bot ham qabul qilinmaydi (is_bot ga ishonilmaydi)', (await paybot.listCol(store, 'banktx')).length, before4b);
+  await B.onBankPost({ id: -100778, type: 'supergroup' }, { from: { id: 136817688, is_bot: true, username: 'Channel_Bot' }, sender_chat: { id: -100555, type: 'channel' }, text: 'Пополнение ➕ 350 039.00 UZS *9012', message_id: 15 });
+  eq4('Kanal nomidan yozilgan soxta xabar rad etildi', (await paybot.listCol(store, 'banktx')).length, before4b);
+  sx.bot = Object.assign({}, sx.bot, { payBankSenders: '777' });
+  await store.set('meta/settings', sx);
+  await B.onBankPost({ id: -100778, type: 'supergroup' }, { from: { id: 777, is_bot: true }, text: 'Пополнение ➕ 350 040.00 UZS *9012', message_id: 16 });
+  eq4('Ruxsat ro‘yxatidagi bank boti qabul qilindi', (await paybot.listCol(store, 'banktx')).length, before4b + 1);
 
   section('5. Muddatdan oldin eslatma');
   await store.set('invoices/i3', { id: 'i3', studentId: 's3', month: today.slice(0, 7), final: 350000, dueDate: plus(2) });

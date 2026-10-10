@@ -74,8 +74,19 @@ async function listCol(store, prefix) {
   return (await store.list(prefix)).filter(r => r.path.split('/').length === 2).map(r => r.data).filter(Boolean);
 }
 
-/** Bir nechta o'quvchi uchun kerakli ma'lumotni BIR MARTA yuklash */
+/* Qisqa kesh: kabinet sahifasi tez-tez ochilsa butun baza har safar o'qilmasin */
+const CACHE_MS = Number(process.env.GAME_CACHE_MS || 10000);
+let cache = null;
+function invalidate() { cache = null; }
 async function loadCtx(store, opts) {
+  const key = (opts && opts.course) ? 'k1' : 'k0';
+  if (cache && cache.key === key && cache.store === store && Date.now() - cache.at < CACHE_MS) return cache.ctx;
+  const ctx = await loadCtxRaw(store, opts);
+  cache = { key, store, at: Date.now(), ctx };
+  return ctx;
+}
+/** Bir nechta o'quvchi uchun kerakli ma'lumotni BIR MARTA yuklash */
+async function loadCtxRaw(store, opts) {
   const settings = (await store.get('meta/settings')) || {};
   const all = await store.all();
   const ctx = {
@@ -88,7 +99,11 @@ async function loadCtx(store, opts) {
     if (!data) continue;
     const seg = p.split('/');
     const col = seg[0];
-    if (col === 'lessons') ctx.lessons.push({ gid: String(seg[1] || '').split('__')[0], doc: data });
+    if (col === 'lessons') {
+      /* Faqat haqiqiy oylik davomat hujjati: lessons/<guruh>__YYYY-MM */
+      const mm = /^(.+)__(\d{4}-\d{2})$/.exec(String(seg[1] || ''));
+      if (seg.length === 2 && mm) ctx.lessons.push({ gid: mm[1], ym: mm[2], doc: data });
+    }
     else if (seg.length !== 2) continue;
     else if (col === 'memberships') ctx.memberships.push(data);
     else if (col === 'quizres') ctx.quizres.push(data);
@@ -112,9 +127,11 @@ function eventsOf(ctx, sid) {
 
   /* Davomat */
   const att = [];
-  ctx.lessons.forEach(({ gid, doc }) => {
+  const today = new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10);
+  ctx.lessons.forEach(({ gid, ym, doc }) => {
     const items = doc.items || {};
     Object.keys(items).forEach(date => {
+      if (date.slice(0, 7) !== ym || date > today) return;   // boshqa oy yoki kelajak — hisobga olinmaydi
       const day = items[date] || {};
       if (day.status === 'bekor') return;
       Object.keys(mids).forEach(mid => {
@@ -134,22 +151,32 @@ function eventsOf(ctx, sid) {
     } else if (a.st === 'kelmadi') {
       streak = 0;
     }   // 'sababli' seriyani uzmaydi
-    if (a.hw === 'ha') { hwDone++; ev.push({ at: a.date, xp: X.homework, kind: 'vazifa', text: 'Uy vazifasini bajardi' }); }
-    if (a.faol) { activeN++; ev.push({ at: a.date, xp: X.active, kind: 'faol', text: 'Darsda faol qatnashdi' }); }
+    const came = a.st === 'keldi' || a.st === 'kechikdi';
+    if (came && a.hw === 'ha') { hwDone++; ev.push({ at: a.date, xp: X.homework, kind: 'vazifa', text: 'Uy vazifasini bajardi' }); }
+    if (came && a.faol) { activeN++; ev.push({ at: a.date, xp: X.active, kind: 'faol', text: 'Darsda faol qatnashdi' }); }
   });
 
   /* Testlar */
   let perfect = 0;
+  /* Har bir test uchun faqat ENG YAXSHI natija — qayta-qayta topshirib ball yig'ib bo'lmaydi */
+  const bestByQuiz = {};
   ctx.quizres.filter(r => String(r.studentId) === String(sid)).forEach(r => {
     const pct = r.total ? Math.round((Number(r.score) || 0) * 100 / r.total) : 0;
+    const k = String(r.quizId || r.id);
+    if (!bestByQuiz[k] || pct > bestByQuiz[k].pct) bestByQuiz[k] = { pct, at: r.at };
+  });
+  Object.keys(bestByQuiz).forEach(k => {
+    const r = bestByQuiz[k], pct = r.pct;
     let xp = Math.round(pct * X.quizMax / 100);
     if (pct === 100) { xp += X.quizPerfect; perfect++; }
     ev.push({ at: String(r.at || '').slice(0, 10), xp, kind: 'test', text: 'Test: ' + pct + '%' });
   });
 
-  /* Savollar */
+  /* Savollar: kuniga faqat bitta savol uchun ball */
   const asked = ctx.questions.filter(q => String(q.studentId) === String(sid));
-  asked.forEach(q => ev.push({ at: String(q.at || '').slice(0, 10), xp: X.question, kind: 'savol', text: 'Ustozga savol berdi' }));
+  const askDays = {};
+  asked.forEach(q => { askDays[String(q.at || '').slice(0, 10)] = 1; });
+  Object.keys(askDays).forEach(d => ev.push({ at: d, xp: X.question, kind: 'savol', text: 'Ustozga savol berdi' }));
 
   /* Onlayn kurs */
   let courseDone = 0;
@@ -285,11 +312,13 @@ async function addBonus(store, data, opts) {
   const id = 'gb_' + Date.now().toString(36) + require('crypto').randomBytes(3).toString('hex');
   const rec = { id, studentId: sid, xp, reason, by: String(opts.byUserId || ''), byName: String(opts.byName || ''), at: opts.stamp() };
   await store.set('gamebonus/' + id, rec);
+  invalidate();
   return { ok: true, rec };
 }
 
 /** O'quvchi sovg'a so'raydi: tanga yetarli bo'lsa — kutilmoqda */
 async function order(store, sid, rewardId, opts) {
+  invalidate();
   const ctx = await loadCtx(store, opts);
   const r = ctx.conf.rewards.find(x => x.id === String(rewardId || ''));
   if (!r) return { ok: false, reason: 'topilmadi' };
@@ -301,10 +330,11 @@ async function order(store, sid, rewardId, opts) {
   const id = 'go_' + Date.now().toString(36) + require('crypto').randomBytes(3).toString('hex');
   const rec = { id, studentId: String(sid), rewardId: r.id, name: r.name, cost: r.cost, status: 'kutilmoqda', at: opts.stamp() };
   await store.set('gameorder/' + id, rec);
+  invalidate();
   return { ok: true, rec };
 }
 
 module.exports = {
-  DEFAULT_XP, BONUS_MAX, BADGES, LEVEL_NAMES, levelOf, levelStart, conf,
+  invalidate, DEFAULT_XP, BONUS_MAX, BADGES, LEVEL_NAMES, levelOf, levelStart, conf,
   forStudent, forGroup, studentStats, addBonus, order, shortName
 };

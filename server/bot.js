@@ -1549,9 +1549,13 @@ async function onBankPost(chat, msg) {
      BOT yuborgan (bank bildirishnoma boti) yoki ruxsat etilgan raqamli yuboruvchi
      xabari qabul qilinadi. Odam yozgan "Пополнение ..." to'lov hisoblanmaydi. */
   if (chat.type !== 'channel') {
+    /* Guruhda FAQAT ruxsat ro'yxatidagi yuboruvchi (bank bildirishnoma boti yoki
+       markaz egasi). "is_bot" ga ishonilmaydi: kanal nomidan yoki anonim admin
+       yozgan xabarda ham from.is_bot = true bo'ladi (Channel_Bot / GroupAnonymousBot). */
     const from = msg.from || {};
     const allowed = paybot.bankSenders(conf);
-    if (!(from.is_bot || allowed.indexOf(String(from.id)) >= 0)) return true;   // e'tiborsiz, lekin bank chati
+    if (msg.sender_chat && String(msg.sender_chat.id) !== String(chat.id)) return true;
+    if (msg.sender_chat || allowed.indexOf(String(from.id)) < 0) return true;   // e'tiborsiz, lekin bank chati
   }
   const text = msg.text || msg.caption || '';
   const tx = await paybot.saveBankTx(payCtx(), text, chat.id, msg.message_id);

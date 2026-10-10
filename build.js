@@ -34,15 +34,16 @@ const MARKAZ = require('./server/markaz');
 const SITE_URL = (process.env.SITE_URL || MARKAZ.CONF.sayt.url || 'http://localhost:3000')
   .replace(/\/+$/, '');
 const CONTENT = require('./server/site-content');
-const SITE_NAME = CONTENT.NAME;
+const SITE_NAME = String(CONTENT.NAME).replace(/[&<>"']/g, '');
 /* Nom variantlari — server/seo.js dagi ro'yxat bilan BIR XIL bo'lishi
    kerak, aks holda Google statik HTML va serverdan kelgan HTML da
    ikki xil signal ko'radi.                                          */
 const ALT_NAMES = CONTENT.ALT_NAMES;
 /* Sarlavha: qidiruv so'zi oldinda, markaz nomi oxirida (~60 belgi). */
-const SITE_TITLE = CONTENT.TITLE;
+const escAttr = v => String(v).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
+const SITE_TITLE = escAttr(CONTENT.TITLE);
 /* Tavsif: ixcham (~155 belgi) — Google kesib tashlamaydi. */
-const SITE_DESC = CONTENT.DESC;
+const SITE_DESC = escAttr(CONTENT.DESC);
 
 /* Google Analytics 4. Bo'sh qoldirilsa (GA_ID='') teg umuman
    qo'yilmaydi — mahalliy ishlaganda yoki sinovda statistika
@@ -263,7 +264,7 @@ const LD = {
       url: SITE_URL + '/',
       logo: { '@type': 'ImageObject', url: SITE_URL + '/assets/icon-512.png', width: 512, height: 512 },
       image: SITE_URL + '/assets/icon-512.png',
-      description: SITE_DESC,
+      description: CONTENT.DESC,
       address: { '@type': 'PostalAddress', addressLocality: CONTENT.CITY, addressCountry: 'UZ' },
       areaServed: { '@type': 'Country', name: 'O‘zbekiston' },
       telephone: CONTENT.PHONE,

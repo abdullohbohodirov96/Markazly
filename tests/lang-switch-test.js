@@ -21,7 +21,7 @@ function section(t) { out.push('\n' + t); }
 /* Ma'lumot (ism, kurs nomi, xona, izoh) tarjima qilinmaydi — uni hisobga olmaymiz.
    Ro'yxat ilovaning o'z ma'lumotidan olinadi, qo'lda yozilmaydi. */
 let DATA_WORDS = new Set();
-const ALLOW = new Set(['uz', 'ru', 'en', 'ar', 'albayan', 'cairo', 'alb', 'tel', 'start',
+const ALLOW = new Set(['uz', 'ru', 'en', 'ar', 'albayan', 'cairo', 'alb', 'mrk', 'tel', 'start',
   'instagram', 'telegram', 'safari', 'chrome', 'android', 'iphone', 'xlsx', 'xls', 'csv',
   'tsv', 'excel', 'readme', 'ismim', 'english', 'ozbekcha', 'pdf']);
 

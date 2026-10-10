@@ -1,3 +1,35 @@
+# Markazly — o‘quv markazi tizimi (shablon)
+
+Bitta shablon, ko‘p markaz. Har bir yangi markaz uchun kod o‘zgarmaydi: **`markaz.json`**, logo va `.env` to‘ldiriladi, xolos.
+Ishga tushirish tartibi va markaz egasiga beriladigan savollar: **[YANGI-MARKAZ.md](YANGI-MARKAZ.md)**.
+
+**Tarkibi:**
+- ERP: murojaatlar, o‘quvchilar, guruhlar, jadval, davomat, to‘lov va qarz, xarajat, ish haqi, hisobotlar, chat, vazifalar.
+- Markazning ochiq sayti.
+- O‘quvchi va ota-ona kabineti.
+- Telegram bot.
+- Gamifikatsiya: XP, daraja, tanga, nishonlar, reyting va sovg‘alar.
+- 4 til (uz, ru, en, ar) va PWA (telefonga o‘rnatiladi).
+
+| Fayl | Nima |
+|---|---|
+| `markaz.json` | Markazga tegishli hamma narsa: nom, aloqa, sayt matnlari, rang, ish tartibi, modullar |
+| `namunalar/sabo-academy.json` | To‘liq namuna (arab tili markazi) |
+| `server/markaz.js` | `markaz.json` ni o‘qiydi; ochiq qismi brauzerga `window.MARKAZ` bo‘lib boradi |
+| `server/game.js`, `js/pages-game.js` | Gamifikatsiya |
+| `scripts/ikonlar.py` | Logodan barcha ikonlar |
+| `scripts/test-all.sh` | Barcha testlar (har bir server testi uchun toza baza bilan) |
+
+Tez ishga tushirish:
+```bash
+npm install && node build.js
+SEED_DIRECTOR_PASSWORD='Parol2026!' npm start      # http://localhost:3000  (login: admin)
+```
+
+---
+
+## Batafsil (asosiy tizim hujjati)
+
 # Arab tili markazi — onlayn markaz uchun ERP va sayt
 
 > Vaqtinchalik nom. Markaz nomi **Sozlamalar → Markaz ma’lumotlari** dan yoki

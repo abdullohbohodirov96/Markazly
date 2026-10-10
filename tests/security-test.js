@@ -458,7 +458,9 @@ async function login(l, p) {
     'youtube', 'heroBadge', 'stats', 'faq', 'heroProof', 'levels',
     'breakMinutes', 'lessonTimes', 'tgChannel', 'tgQabul', 'tgQabulLabel',
     /* Ikkinchi filialning qabul manzili */
-    'tgQabul2', 'tgQabulLabel2', 'reviews'];
+    'tgQabul2', 'tgQabulLabel2', 'reviews',
+    /* Sayt bloklari (ochiq ma'lumot) */
+    'taglines', 'youtube', 'facebook', 'heroBadge', 'stats', 'heroProof', 'levels', 'faq'];
   ok('Faqat sayt uchun ochiq maydonlar', pubKeys.every(k => allowed.indexOf(k) >= 0),
     pubKeys.join(', '));
   /* --- Saytdagi izohlar ---

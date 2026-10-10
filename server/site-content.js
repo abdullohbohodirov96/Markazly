@@ -55,7 +55,7 @@ function seoText(o) {
   const tel = phone.replace(/[^+0-9]/g, '');
   const parts = [
     '<noscript><main id="seo-prerender" style="max-width:860px;margin:24px auto;padding:28px;font:16px/1.6 system-ui,sans-serif;color:#222;background:#fff;border-radius:18px">',
-    '<h1>' + name + ' — ' + esc(M.sohasi) + '</h1>',
+    '<h1>' + name + ' — ' + esc(M.fan ? M.fan.toLowerCase() + ' kurslari' : M.sohasi) + '</h1>',
     '<p><strong>' + name + '</strong> — ' + esc(SAYT.heroLead || M.sohasi) + '</p>',
     (Array.isArray(SAYT.natijaBosqichlar) && SAYT.natijaBosqichlar.length
       ? '<h2>' + esc(SAYT.natijaSarlavha || 'Natija yo‘li') + '</h2><ul>' +

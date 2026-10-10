@@ -64,7 +64,7 @@ const ADMIN = 555111, GUEST = 777222;
   ok('Ko‘rib chiqish: to‘g‘ri javob belgilangan', /✅ Kitab/.test(r.text), r.text);
   const before = polls.length;
   r = await say(ADMIN, '📤 Hozir kanalga');
-  ok('Hozir kanalga ketdi', polls.length === before + 1 && polls[polls.length - 1].params.question === '"Kitob" arabchada qanday?' && polls[polls.length - 1].params.correct_option_id === 1, JSON.stringify(polls[polls.length - 1].params).slice(0, 160));
+  ok('Hozir kanalga ketdi', polls.length === before + 1 && polls[polls.length - 1].params.question === '"Kitob" arabchada qanday?' && (function (pp) { return pp.options[pp.correct_option_id].text === 'Kitab'; })(polls[polls.length - 1].params), JSON.stringify(polls[polls.length - 1].params).slice(0, 160));
   ok('Bazaga yozildi', (await B.quizList()).some(q => q.question === '"Kitob" arabchada qanday?' && q.sentAt));
 
   console.log('\n4. Bitta xabarda savol → navbatga');

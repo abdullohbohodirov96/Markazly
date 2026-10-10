@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const DEF_ORIGIN = require('../server/markaz').CONF.sayt.url || 'http://localhost';
 const fs = require('node:fs');
 const path = require('node:path');
 const seo = require('../server/seo');
@@ -91,7 +92,7 @@ assert.equal((sm1.match(/<loc>/g) || []).length, 1);
   delete process.env.SITE_URL;
   const yot = ['zararli.example.com', 'evil.uz', 'google.com', 'albayan.attacker.net'];
   for (const bad of yot) {
-    assert.equal(seo.origin(bad), 'https://arab-markaz.onrender.com',
+    assert.equal(seo.origin(bad), DEF_ORIGIN,
       'begona host o‘tib ketdi: ' + bad);
     assert.doesNotMatch(seo.robots(bad), new RegExp(bad.replace(/\./g, '\\.')));
     assert.doesNotMatch(seo.sitemap(bad), new RegExp(bad.replace(/\./g, '\\.')));
@@ -101,13 +102,13 @@ assert.equal((sm1.match(/<loc>/g) || []).length, 1);
   assert.equal(seo.origin('localhost:3300'), 'http://localhost:3300');
   assert.equal(seo.origin('127.0.0.1:3300'), 'http://127.0.0.1:3300');
   /* Render o'zi bergan manzil ham qabul qilinadi */
-  process.env.RENDER_EXTERNAL_URL = 'https://arab-markaz.onrender.com';
-  assert.equal(seo.origin('zararli.example.com'), 'https://arab-markaz.onrender.com');
+  process.env.RENDER_EXTERNAL_URL = DEF_ORIGIN;
+  assert.equal(seo.origin('zararli.example.com'), DEF_ORIGIN);
   delete process.env.RENDER_EXTERNAL_URL;
   if (old != null) process.env.SITE_URL = old;
 }
 /* Begona Host e'tiborga olinmaydi — canonical standart manzilda qoladi */
-assert.match(rendered, /<link rel="canonical" href="https:\/\/arab-markaz\.onrender\.com\/">/);
+assert.ok(rendered.indexOf('<link rel="canonical" href="' + DEF_ORIGIN + '/">') >= 0, 'canonical standart manzilda');
 assert.match(rendered, /Taxtapul Darvoza/);
 assert.match(rendered, /tel:\+998555882028/);
 assert.match(rendered, /"EducationalOrganization"/);
@@ -126,6 +127,6 @@ const hostile = seo.render(html, {
 }, 'bad.example.com"><script>alert(1)</script>');
 assert.doesNotMatch(hostile, /<script>alert\(1\)<\/script>/);
 assert.doesNotMatch(hostile, /href="javascript:/);
-assert.match(hostile, /https:\/\/arab-markaz\.onrender\.com/);
+assert.ok(hostile.indexOf(DEF_ORIGIN) >= 0, 'standart manzil');
 
 console.log('✓ SEO HTML, tuzilgan ma\u2019lumot va xavfsiz matn sinovlari o\u2019tdi.');

@@ -66,6 +66,7 @@ Yangi markaz uchun quyidagi matnlar yoziladi. Har birini `{ "uz": "…", "ru": "
 | «Nega biz»: sarlavha, matn, 6 band | `negaBiz*` |
 | Darajalar, ustozlar va dars haqida izohlar | `darajalarIzoh`, `ustozlarIzoh`, `darsIzoh` |
 | Arizadagi «Hozirgi darajangiz» savoli va variantlari | `darajaSavoli`, `darajaVariantlari` |
+| Bosh ekran ostidagi 3 ta ko‘rsatkich (masalan «1 yil — noldan natijagacha») | `korsatkichlar` |
 | Ko‘p so‘raladigan savollar | `faq` |
 | Google uchun sarlavha va tavsif | `sarlavha`, `tavsif`, `kursNomi`, `kursTavsifi` |
 

@@ -7,7 +7,7 @@ export MARKAZ_FILE="$PWD/tests/markaz.test.json"
 PASS='Albyana2026!'
 # Sinov uchun index.html Google Analytics tegi bilan quriladi (site-test GA himoyasini tekshiradi); oxirida qayta quriladi
 GA_MEASUREMENT_ID=G-SINOV0000 node build.js >/dev/null
-trap 'node build.js >/dev/null' EXIT
+trap 'MARKAZ_FILE= node build.js >/dev/null' EXIT
 TMP=$(mktemp -d)
 RES="$TMP/natija.txt"; : > "$RES"
 UNIT="game-test run-tests backup-test bot-admin-test bot-idle-test bot-reg-test bot-test kabinet-bot-test kanal-quiz-test link-test paybot-test tozalash-test seo-render-test kod-test lms-test level-test"

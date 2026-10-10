@@ -122,6 +122,20 @@
         "q": "Tekin dars qanday o‘tadi?",
         "a": "“Tekin darsga yozilish” tugmasini bosing va raqamingizni qoldiring. Administratorimiz bog‘lanadi."
       }
+    ],
+    "korsatkichlar": [
+      {
+        "v": "1 yil",
+        "t": "noldan natijagacha"
+      },
+      {
+        "v": "80 daqiqa",
+        "t": "bitta dars"
+      },
+      {
+        "v": "3 marta",
+        "t": "haftasiga dars"
+      }
     ]
   },
   "rang": {
@@ -151,5 +165,6 @@
     "tolovBoti": false,
     "kanalViktorina": false,
     "_izoh": "onlaynKurs, darajaTesti va kanalViktorina hozircha faqat ARAB TILI mazmuni bilan keladi (A1 kurs, savollar bazasi). Boshqa fan uchun ularni o'chiq qoldiring yoki mazmun yozing."
-  }
+  },
+  "fan": ""
 }

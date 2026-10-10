@@ -1811,7 +1811,7 @@
             h('span', { class: 'zm-time' }, '00:34:12')
           ]),
           h('div', { class: 'zm-body' }, [
-            h('div', { class: 'zm-board' }, [
+            h('div', { class: 'zm-board', dir: /[\u0590-\u08FF]/.test(String(DOSKA.katta)) ? 'rtl' : 'ltr' }, [
               h('div', { class: 'zm-ar' }, DOSKA.katta),
               h('div', { class: 'zm-tr' }, DOSKA.kichik),
               h('div', { class: 'zm-letters' }, (DOSKA.harflar || []).map(function (l) { return h('span', {}, l); }))
@@ -2485,11 +2485,12 @@
     var STAT_ICO = ['layers', 'users', 'calendar', 'clock'];
     function paintStats(list, minutes) {
       UI.clear(statsBox);
-      var rows = (list && list.length) ? list : [
+      /* Sozlamada yozilmagan bo'lsa — markaz.json → sayt.korsatkichlar, u ham bo'lmasa standart */
+      var rows = (list && list.length) ? list : A.S('korsatkichlar', [
         { v: '1 yil', t: 'noldan natijagacha' },
         { v: (minutes || 80) + ' daqiqa', t: 'jonli Zoom dars' },
         { v: '3 marta', t: 'haftasiga dars' }
-      ];
+      ]);
       rows.forEach(function (r, i) {
         statsBox.appendChild(h('div', { class: 'hero-stat', style: '--i:' + i }, [
           h('span', { class: 'stat-ico' }, UI.icon(STAT_ICO[i % STAT_ICO.length])),

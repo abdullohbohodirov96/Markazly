@@ -4111,3 +4111,4 @@ html,body{max-width:100%;overflow-x:clip}   /* clip: scroll-konteyner yaratmaydi
 .gm-legend{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;padding:10px 16px;margin:-4px 0 6px;background:rgba(246,196,83,.12);border-bottom:1px solid var(--line);font-size:13px;color:var(--ink-2)}
 .gm-legend b{font-weight:400}
 .gm-wiz .gm-sum{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.zm-board[dir="ltr"] .zm-ar,.zm-board[dir="ltr"] .zm-letters{direction:ltr}

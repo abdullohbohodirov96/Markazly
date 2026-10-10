@@ -1305,6 +1305,7 @@
     '⭐ Rag‘bat': ['⭐ Поощрить', '⭐ Reward', '⭐ مكافأة'],
     'Berildi': ['Выдано', 'Given', 'تم التسليم'],
     'Olish': ['Получить', 'Get', 'احصل'],
+    'Onlayn kurs': ['Онлайн-курс', 'Online course', 'الدورة عبر الإنترنت'],
     'Kodni nusxalash': ['Скопировать код', 'Copy the code', 'نسخ الرمز'],
     'Telegram guruhi': ['Telegram-группа', 'Telegram group', 'مجموعة تيليجرام'],
     'Saytdagi ustozlar': ['Преподаватели на сайте', 'Teachers on the website', 'المعلّمون في الموقع'],

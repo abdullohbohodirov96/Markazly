@@ -1,0 +1,47 @@
+# Render.com — Sabo Academy: TO'LIQ server (sayt + ERP + kabinet + Telegram bot).
+# Baza: Neon (PostgreSQL) — DATABASE_URL orqali. Doimiy disk shart emas:
+# yuklangan fayllar ham bazada saqlanadi (server/files.js, FILES_STORE=db).
+#
+# Render panelidagi sozlamalar shu fayl bilan bir xil bo'lishi kerak:
+#   Build Command:  npm install && node build.js
+#   Start Command:  node server/index.js
+#   Health Check:   /api/health
+services:
+  - type: web
+    name: HayotTalim
+    runtime: node
+    plan: free             # Starter'ga o'tilsa — server uxlab qolmaydi
+    region: frankfurt
+    buildCommand: npm install && node build.js
+    startCommand: node server/index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: APP_NAME
+        value: Sabo Academy
+      - key: FILES_STORE
+        value: db
+      - key: SESSION_MAX_AGE_DAYS
+        value: "7"
+      - key: SEED_DIRECTOR_LOGIN
+        value: admin
+      - key: SITE_URL
+        value: https://hayottalim.uz
+      - key: PUBLIC_URL
+        value: https://hayottalim.uz
+      - key: GA_MEASUREMENT_ID
+        value: G-HQWL42X43Y
+      # Maxfiy qiymatlar — Render panelida o'zingiz kiritasiz:
+      - key: DATABASE_URL          # Neon: postgresql://...?sslmode=require
+        sync: false
+      - key: SEED_DIRECTOR_PASSWORD
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_BOT_USERNAME
+        sync: false
+      - key: ELEVENLABS_API_KEY    # ixtiyoriy
+        sync: false

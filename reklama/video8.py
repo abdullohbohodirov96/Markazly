@@ -316,7 +316,7 @@ add(rr(90, 800, 900, 330, 44, "#123A2C", MINT, 4) + T("Markazly", CX, 900, 50, S
 add('<circle cx="540" cy="760" r="480" fill="url(#halo)"/>', T_F, DUR + 1, dy=0, dur=.8)
 add(T("Hoziroq", CX, 520, 76, SEMI, FG, "middle") + T("pastdagi tugmani", CX, 610, 76, SEMI, FG, "middle") + T("bosing", CX, 700, 76, SEMI, "url(#gh)", "middle"), T_F, DUR + 1)
 add(rr(110, 790, 860, 210, 105, "url(#gh)") + T("7 kun bepul", CX, 892, 84, SEMI, INK, "middle") + T("sinab ko‘ring", CX, 960, 46, MED, "#0A3D27", "middle"), at("Markazly'ni 7 kun"), DUR + 1, pop=True)
-add(T("markazly.onrender.com", CX, 1090, 38, MED, MUTED, "middle"), at("Markazly'ni 7 kun") + .6, DUR + 1)
+add(T("markazly.uz", CX, 1090, 38, MED, MUTED, "middle"), at("Markazly'ni 7 kun") + .6, DUR + 1)
 arrow = f'<g transform="translate({CX-60} 1170)"><circle cx="60" cy="60" r="60" fill="#2EE59D" fill-opacity=".18"/><path d="M60 28 V92 M32 66 L60 94 L88 66" fill="none" stroke="#2EE59D" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/></g>'
 add(arrow, T_F + .8, DUR + 1, bob=14)
 S_B, S_F = T_B, T_F

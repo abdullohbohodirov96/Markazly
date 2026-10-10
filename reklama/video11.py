@@ -147,7 +147,7 @@ for j, (t, tt) in enumerate([("ننقل بياناتك بأنفسنا", "ونن�
 add('<circle cx="540" cy="760" r="480" fill="url(#halo)"/>', T_E, DUR + 1, dy=0, dur=.8)
 add(ar("اضغط الزرّ", CX, 530, 90) + ar("في الأسفل الآن", CX, 650, 90, "url(#gh)"), T_E, DUR + 1)
 add(rr(110, 740, 860, 220, 110, "url(#gh)") + ar("جرّب ٧ أيام مجاناً", CX, 870, 74, INK), at("وجرّب"), DUR + 1, pop=True)
-add(T("markazly.onrender.com", CX, 1040, 38, MED, MUTED, "middle"), at("وجرّب") + .6, DUR + 1)
+add(T("markazly.uz", CX, 1040, 38, MED, MUTED, "middle"), at("وجرّب") + .6, DUR + 1)
 arrow = f'<g transform="translate({CX-60} 1120)"><circle cx="60" cy="60" r="60" fill="#2EE59D" fill-opacity=".18"/><path d="M60 28 V92 M32 66 L60 94 L88 66" fill="none" stroke="#2EE59D" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/></g>'
 add(arrow, T_E + .6, DUR + 1, bob=14)
 S_B, S_F = T_B, T_E

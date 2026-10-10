@@ -135,7 +135,7 @@ add(f'<g transform="translate(918 1280) scale(.78)"><circle r="54" fill="{MINT}"
 add('<circle cx="540" cy="760" r="480" fill="url(#halo)"/>', S_F, DUR + 1, dy=0, dur=.8)
 add(T("Hoziroq", CX, 520, 76, SEMI, FG, "middle") + T("pastdagi tugmani", CX, 610, 76, SEMI, FG, "middle") + T("bosing", CX, 700, 76, SEMI, "url(#gh)", "middle"), S_F, DUR + 1)
 add(rr(110, 790, 860, 210, 105, "url(#gh)") + T("7 kun bepul", CX, 892, 84, SEMI, INK, "middle") + T("sinab ko‘ring", CX, 960, 46, MED, "#0A3D27", "middle"), v(35.0), DUR + 1, pop=True)
-add(T("Ma’lumotlarni o‘zimiz ko‘chiramiz", CX, 1090, 38, MED, MUTED, "middle"), v(36.0), DUR + 1)
+add(T("markazly.uz", CX, 1090, 44, SEMI, MUTED, "middle"), v(36.0), DUR + 1)
 arrow = f'<g transform="translate({CX-60} 1170)"><circle cx="60" cy="60" r="60" fill="#2EE59D" fill-opacity=".18"/><path d="M60 28 V92 M32 66 L60 94 L88 66" fill="none" stroke="#2EE59D" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/></g>'
 add(arrow, v(33.6), DUR + 1, bob=14)
 add(arrow.replace("1170)", "1320)").replace('fill-opacity=".18"', 'fill-opacity=".08"').replace('stroke="#2EE59D"', 'stroke="#2EE59D" stroke-opacity=".5"'), v(33.9), DUR + 1, bob=14)

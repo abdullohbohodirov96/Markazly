@@ -74,8 +74,16 @@ async function submitTest(A, store, sid, body, stamp) {
   const answers = Array.isArray(body.answers) ? body.answers.slice(0, 50).map(Number) : [];
   const doc = await get(store, sid);
   if (!lessonOpen(A, doc, lesson.id)) return { error: 'Bu dars hali yopiq.', code: 403 };
-  const g = C.gradeTest(lesson, answers);
   const p = doc.lessons[lesson.id] = doc.lessons[lesson.id] || {};
+  /* Tasodifiy bosib o'tishning oldini olish: 3 ta urinishdan keyin har muvaffaqiyatsiz
+     urinishdan so'ng kutish vaqti (sukut: 2 daqiqa). O'tib bo'lgan test cheklanmaydi. */
+  const COOL = Number(process.env.COURSE_TEST_COOLDOWN_MS || 120000);
+  if (!(p.steps && p.steps.test) && (p.testTries || 0) >= 3 && p.testFailMs && Date.now() - p.testFailMs < COOL) {
+    const sec = Math.ceil((COOL - (Date.now() - p.testFailMs)) / 1000);
+    return { error: 'Darsni yana bir ko’rib chiqing. Testni ' + sec + ' soniyadan keyin qayta topshirishingiz mumkin.', code: 429 };
+  }
+  const g = C.gradeTest(lesson, answers);
+  if (g.percent < C.PASS) p.testFailMs = Date.now();
   p.testLast = g.percent;
   p.testTries = (p.testTries || 0) + 1;
   if (p.testBest == null || g.percent > p.testBest) p.testBest = g.percent;
@@ -104,6 +112,9 @@ async function submitHomework(A, store, sid, body, stamp, files) {
     (Array.isArray(body.fillAnswers) && body.fillAnswers.some(t => String(t || '').trim())) ||
     (Array.isArray(body.trAnswers) && body.trAnswers.some(t => String(t || '').trim().length >= 2));
   if (!hasWork) return { error: 'Yozma javob yozing yoki daftaringiz rasmini yuklang.', code: 400 };
+  /* Ustoz qabul qilgan vazifani qayta topshirib bo'lmaydi — aks holda baho va izoh o'chib ketadi */
+  const prevHw = doc.lessons[lesson.id] && doc.lessons[lesson.id].hw;
+  if (prevHw && prevHw.status === 'qabul') return { error: 'Bu vazifa allaqachon qabul qilingan.', code: 409 };
   const auto = C.gradeHomeworkAuto(lesson, autoAnswers);
   /* Kitobdagidek yozma mashqlar: bo'sh joyni to'ldirish va tarjima — server o'zi baholaydi */
   const fillAnswers = (Array.isArray(body.fillAnswers) ? body.fillAnswers : []).slice(0, 10).map(t => txt(t, 200));

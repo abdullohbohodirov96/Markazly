@@ -48,8 +48,10 @@ function writePermFor(docPath) {
        qoladi, ya'ni faqat maxsus API yo'llari orqali yoziladi.          */
   };
   if (col === 'meta') {
+    /* Faqat markaz sozlamasini mijoz yozadi. Qolgan meta hujjatlar (autoinvoice,
+       backupstate va h.k.) server ichki holati — mijoz ularni yoza olmaydi. */
     if (p === 'meta/settings') return 'settings.edit';
-    return null;                       // meta/finindex — har qanday kirgan foydalanuvchi
+    return '__server__';
   }
   if (col === 'lessons') return 'attendance.mark';
   if (col === 'botstate' || col === 'botin') return '__server__';  // faqat bot yozadi
@@ -60,7 +62,8 @@ function writePermFor(docPath) {
 function readBlocked(docPath, user) {
   const col = String(docPath || '').split('/')[0];
   if (col === 'botstate') return true;
-  if (col === 'kabpass') return true;              // o'quvchi parollari (xesh) — hech kimga
+  if (col === 'kabpass') return true;
+  if (col === 'staffsess' || col === 'kabsess') return true;   // sessiyalar — hech kimga              // o'quvchi parollari (xesh) — hech kimga
   if (col === 'filebody') return true;             // fayl mazmuni faqat /api/file orqali
   if (col === 'tgquiz' || col === 'tgquizlog') return true;  // kanal viktorinasi (javoblari bilan)
   if (col === 'photos') return true;               // rasm faqat /api/photo orqali beriladi
@@ -110,6 +113,111 @@ function safeStudent(s, user) {
 /* Markazning yagona umumiy suhbati — identifikator server tomonida belgilangan */
 const GENERAL_CHAT = 'chat_umumiy';
 
+function allowCollectionFor(user, name) {
+  switch (name) {
+    case 'users': return true;                       // faqat nom/rol yuboriladi
+    case 'staff': return true;                       // ish haqi olib tashlanadi
+    case 'teachers': return true;                    // ochiq ma'lumot — hamma ko'radi
+    case 'students': return A.can(user, 'student.view');
+    case 'groups': case 'courses': case 'rooms': case 'memberships':
+      return A.can(user, 'group.view') || A.can(user, 'student.view');
+    case 'leads': case 'funnels': return A.can(user, 'nav.leads');
+    /* Saytdagi izohlar — sozlamani boshqaradiganlarga (tasdiqlash uchun) */
+    case 'reviews': return A.can(user, 'settings.edit');
+    /* Daraja testi natijalari — murojaatlar bilan ishlaydiganlarga.
+       Savollar ('testq') va sessiyalar ('testsess') hech kimga chiqmaydi. */
+    case 'placements': return A.can(user, 'lead.view');
+    /* O'quv dasturi — ko'rish hamma xodimga, tahrir alohida huquq bilan */
+    case 'modules': case 'topics': case 'materials': case 'homework':
+      return A.can(user, 'curriculum.view') || A.can(user, 'group.view');
+    case 'lessonlog': case 'holidays': case 'pauses': case 'makeups':
+      return A.can(user, 'group.view') || A.can(user, 'schedule.view');
+    case 'quizzes': case 'quizres': case 'asks':
+      return A.can(user, 'group.view') || A.can(user, 'student.view');
+    case 'questions': case 'feedback':
+      return A.can(user, 'group.view');
+    /* Ota-ona hisobi — o'quvchi bilan ishlaydiganlarga */
+    case 'parents': return A.can(user, 'student.view');
+    /* Fayl ma'lumotnomasi (mazmuni emas) — /api/file orqali olinadi */
+    case 'files': return A.can(user, 'group.view') || A.can(user, 'student.view');
+    case 'invoices': case 'payments': return A.can(user, 'finance.payments') || A.can(user, 'finance.debts');
+    case 'expenses': return A.can(user, 'finance.expenses');
+    case 'payroll': return A.can(user, 'finance.payroll');
+    case 'tasks': return A.can(user, 'nav.tasks');
+    case 'chats': return A.can(user, 'nav.chat');
+    case 'botreq': case 'botout': case 'botin': return A.can(user, 'nav.bot');
+    case 'audit': return A.can(user, 'settings.edit');
+    default: return false;
+  }
+}
+
+
+function scopeDoc(user, name, d, sc, byPath) {
+  const myGroupIds = (sc && sc.gid) || {};
+  const myStudentIds = (sc && sc.sid) || {};
+  byPath = byPath || {};
+  if (!d) return null;
+  switch (name) {
+    case 'users':
+      if (A.can(user, 'users.manage')) return safeUser(d);
+      return { id: d.id, name: d.name, role: d.role, active: d.active, staffId: d.staffId };
+    case 'staff': return safeStaff(d, user);
+    case 'students':
+      if (user.role === 'oqituvchi' && !myStudentIds[d.id]) return null;
+      return safeStudent(d, user);
+    case 'groups':
+      if (user.role === 'oqituvchi' && !myGroupIds[d.id]) return null;
+      return d;
+    case 'memberships':
+      if (user.role === 'oqituvchi' && !myGroupIds[d.groupId]) return null;
+      return d;
+    case 'invoices': case 'payments':
+      if (user.role === 'oqituvchi') return null;
+      return d;
+    case 'chats':
+      // "type" mijozdan keladi — unga ishonilmaydi. Umumiy suhbat faqat bitta.
+      if (d.id === GENERAL_CHAT) return d;
+      return (d.members || []).indexOf(user.id) >= 0 ? d : null;
+    case 'tasks':
+      if (A.can(user, 'task.assign') || A.can(user, 'settings.edit')) return d;
+      return (d.assigneeId === user.id || d.createdById === user.id) ? d : null;
+    case 'parents':
+      /* Ota-ona hisobida kirish kodi bor — o'qituvchiga umuman berilmaydi */
+      if (user.role === 'oqituvchi') return null;
+      return d;
+    case 'files':
+      if (user.role === 'oqituvchi' && !teacherSeesFile(d, user, myGroupIds, myStudentIds, byPath)) return null;
+      return d;
+    case 'quizres': case 'asks': case 'lessonlog': case 'pauses': case 'makeups':
+    case 'feedback': case 'questions': case 'quizzes':
+      if (user.role === 'oqituvchi') {
+        if (d.groupId) return myGroupIds[d.groupId] ? d : null;
+        if (d.studentId) return myStudentIds[d.studentId] ? d : null;
+      }
+      return d;
+    default: return d;
+  }
+}
+
+/** O'qituvchi faylni ko'ra oladimi: o'zi yuklagan, o'z guruhi/o'quvchisiga tegishli
+    yoki o'quv dasturi materiali (dastur hamma xodimga ochiq). */
+function teacherSeesFile(f, user, gid, sid, byPath) {
+  if (!f) return false;
+  if (f.byKind !== 'oquvchi' && f.by === user.id) return true;
+  if (f.byKind === 'oquvchi' && sid[String(f.by)]) return true;
+  const ref = String(f.refPath || '');
+  const seg = ref.split('/');
+  const col = seg[0], key = seg[1] || '';
+  if (col === 'materials' || col === 'homework') return true;
+  if (col === 'lessonlog') return !!gid[key.split('__')[0]] || !!(byPath[ref] && gid[byPath[ref].groupId]);
+  if (col === 'students') return !!sid[key];
+  if (col === 'asks') return !!(byPath[ref] && sid[byPath[ref].studentId]);
+  if (col === 'lessonvideo' || col === 'qissaaudio') return true;   // kurs materiali
+  if (col === 'courseprog') return !!sid[key];
+  return false;
+}
+
+
 /**
  * Foydalanuvchiga ko'rsatish mumkin bo'lgan ma'lumotlarni ajratish.
  * Serverda bajariladi — brauzerga ortiqchasi umuman yuborilmaydi.
@@ -128,80 +236,14 @@ function visibleData(user, all) {
     .map(x => x.data);
 
   // O'qituvchi uchun ko'rinadigan guruh va o'quvchilar
-  const myGroupIds = {};
-  const myStudentIds = {};
+  const sc = { gid: {}, sid: {} };
   if (user.role === 'oqituvchi') {
-    groups.forEach(g => { if (g.teacherId && g.teacherId === user.staffId) myGroupIds[g.id] = 1; });
-    memberships.forEach(m => { if (myGroupIds[m.groupId]) myStudentIds[m.studentId] = 1; });
+    groups.forEach(g => { if (g.teacherId && g.teacherId === user.staffId) sc.gid[g.id] = 1; });
+    memberships.forEach(m => { if (sc.gid[m.groupId]) sc.sid[m.studentId] = 1; });
   }
-
-  function allowCollection(name) {
-    switch (name) {
-      case 'users': return true;                       // faqat nom/rol yuboriladi
-      case 'staff': return true;                       // ish haqi olib tashlanadi
-      case 'teachers': return true;                    // ochiq ma'lumot — hamma ko'radi
-      case 'students': return A.can(user, 'student.view');
-      case 'groups': case 'courses': case 'rooms': case 'memberships':
-        return A.can(user, 'group.view') || A.can(user, 'student.view');
-      case 'leads': case 'funnels': return A.can(user, 'nav.leads');
-      /* Saytdagi izohlar — sozlamani boshqaradiganlarga (tasdiqlash uchun) */
-      case 'reviews': return A.can(user, 'settings.edit');
-      /* Daraja testi natijalari — murojaatlar bilan ishlaydiganlarga.
-         Savollar ('testq') va sessiyalar ('testsess') hech kimga chiqmaydi. */
-      case 'placements': return A.can(user, 'lead.view');
-      /* O'quv dasturi — ko'rish hamma xodimga, tahrir alohida huquq bilan */
-      case 'modules': case 'topics': case 'materials': case 'homework':
-        return A.can(user, 'curriculum.view') || A.can(user, 'group.view');
-      case 'lessonlog': case 'holidays': case 'pauses': case 'makeups':
-        return A.can(user, 'group.view') || A.can(user, 'schedule.view');
-      case 'quizzes': case 'quizres': case 'asks':
-        return A.can(user, 'group.view') || A.can(user, 'student.view');
-      case 'questions': case 'feedback':
-        return A.can(user, 'group.view');
-      /* Ota-ona hisobi — o'quvchi bilan ishlaydiganlarga */
-      case 'parents': return A.can(user, 'student.view');
-      /* Fayl ma'lumotnomasi (mazmuni emas) — /api/file orqali olinadi */
-      case 'files': return A.can(user, 'group.view') || A.can(user, 'student.view');
-      case 'invoices': case 'payments': return A.can(user, 'finance.payments') || A.can(user, 'finance.debts');
-      case 'expenses': return A.can(user, 'finance.expenses');
-      case 'payroll': return A.can(user, 'finance.payroll');
-      case 'tasks': return A.can(user, 'nav.tasks');
-      case 'chats': return A.can(user, 'nav.chat');
-      case 'botreq': case 'botout': case 'botin': return A.can(user, 'nav.bot');
-      case 'audit': return A.can(user, 'settings.edit');
-      default: return false;
-    }
-  }
-
-  function filterDoc(name, d) {
-    if (!d) return null;
-    switch (name) {
-      case 'users':
-        if (A.can(user, 'users.manage')) return safeUser(d);
-        return { id: d.id, name: d.name, role: d.role, active: d.active, staffId: d.staffId };
-      case 'staff': return safeStaff(d, user);
-      case 'students':
-        if (user.role === 'oqituvchi' && !myStudentIds[d.id]) return null;
-        return safeStudent(d, user);
-      case 'groups':
-        if (user.role === 'oqituvchi' && !myGroupIds[d.id]) return null;
-        return d;
-      case 'memberships':
-        if (user.role === 'oqituvchi' && !myGroupIds[d.groupId]) return null;
-        return d;
-      case 'invoices': case 'payments':
-        if (user.role === 'oqituvchi') return null;
-        return d;
-      case 'chats':
-        // "type" mijozdan keladi — unga ishonilmaydi. Umumiy suhbat faqat bitta.
-        if (d.id === GENERAL_CHAT) return d;
-        return (d.members || []).indexOf(user.id) >= 0 ? d : null;
-      case 'tasks':
-        if (A.can(user, 'task.assign') || A.can(user, 'settings.edit')) return d;
-        return (d.assigneeId === user.id || d.createdById === user.id) ? d : null;
-      default: return d;
-    }
-  }
+  const myGroupIds = sc.gid;
+  const allowCollection = name => allowCollectionFor(user, name);
+  const filterDoc = (name, d) => scopeDoc(user, name, d, sc, byPath);
 
   all.forEach(({ path: p, data }) => {
     const seg = p.split('/');
@@ -211,7 +253,7 @@ function visibleData(user, all) {
       return;
     }
     if (seg[0] === 'botstate') return;
-    if (seg[0] === 'meta') { docs[p] = data; return; }
+    if (seg[0] === 'meta') return;   // ichki server holati — mijozga yuborilmaydi
 
     if (seg.length === 2) {
       if (!allowCollection(seg[0])) return;
@@ -233,4 +275,4 @@ function visibleData(user, all) {
   return { col, docs, settings };
 }
 
-module.exports = { A, writePermFor, readBlocked, safeUser, safeStaff, safeStudent, visibleData, GENERAL_CHAT };
+module.exports = { A, allowCollectionFor, scopeDoc, teacherSeesFile, writePermFor, readBlocked, safeUser, safeStaff, safeStudent, visibleData, GENERAL_CHAT };

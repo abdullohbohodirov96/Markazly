@@ -2172,6 +2172,7 @@
     var result = h('div', { style: 'margin-top:12px' });
     var chosen = null;           // {dump, name}
     var confirmInput = h('input', { class: 'inp', placeholder: 'TIKLASH' });
+    var passInput = h('input', { class: 'inp', type: 'password', autocomplete: 'current-password', placeholder: 'Parolingiz' });
     var applyBtn = null;
 
     if (D.mode === 'server') {
@@ -2247,6 +2248,10 @@
       result.appendChild(h('p', { class: 'small', style: 'margin:10px 0 4px' },
         'Tiklashdan oldin joriy holat avtomatik zaxiraga olinadi. Davom etish uchun katta harflarda TIKLASH deb yozing:'));
       result.appendChild(confirmInput);
+      if (D.mode === 'server') {
+        result.appendChild(h('p', { class: 'small', style: 'margin:10px 0 4px' }, 'Xavfsizlik uchun parolingizni kiriting:'));
+        result.appendChild(passInput);
+      }
     }
 
     var m = UI.modal({
@@ -2272,8 +2277,8 @@
             try {
               if (D.mode === 'server') {
                 var body = chosen.fromServer
-                  ? { name: chosen.name, confirm: 'TIKLASH' }
-                  : { dump: chosen.dump, confirm: 'TIKLASH' };
+                  ? { name: chosen.name, confirm: 'TIKLASH', password: passInput.value }
+                  : { dump: chosen.dump, confirm: 'TIKLASH', password: passInput.value };
                 var r = await D.api('POST', 'api/backup/restore', body);
                 UI.toast('Tiklandi: ' + r.restored + ' yozuv. Oldingi holat "' + r.safety + '" fayliga saqlandi.', 'ok');
                 await D.loadBootstrap();

@@ -1288,7 +1288,7 @@
       ['Ota-ona / vasiy', s.parentName || '—'],
       ['Ota-ona telefoni', s.parentPhone ? UI.phoneLink(s.parentPhone) : '—'],
       ['Qo’shilgan sana', (s.joinDate || s.createdAt) ? A.dateLabel(String(s.joinDate || s.createdAt).slice(0, 10)) +
-        ' · har oy ' + Math.min(28, Number(String(s.joinDate || s.createdAt).slice(8, 10)) || 1) + '-sanada to’laydi' : '—'],
+        ' · har oy ' + Math.min(31, Number(String(s.joinDate || s.createdAt).slice(8, 10)) || 1) + '-sanada to’laydi' : '—'],
       ['Qo’shilgan', s.createdAt || '—'],
       ['Izoh', s.note || '—']].forEach(function (r) {
         dl.appendChild(h('dt', {}, r[0]));

@@ -9,7 +9,8 @@ const crypto = require('crypto');
 try { require('dotenv').config(); } catch (e) { /* dotenv ixtiyoriy */ }
 
 const { createStore } = require('./store');
-const { A, writePermFor, readBlocked, safeUser, safeStaff, visibleData, GENERAL_CHAT } = require('./shared');
+const { A, writePermFor, readBlocked, safeUser, safeStaff, visibleData, GENERAL_CHAT,
+  allowCollectionFor, scopeDoc } = require('./shared');
 const backup = require('./backup');
 const kabinet = require('./kabinet');
 const link = require('./link');
@@ -355,9 +356,55 @@ function kabinetOk(ip) {
   kabinetTries.set(ip, { n: 0, first: Date.now(), total: rec.total || 0 });
 }
 
-/* ---------------- Sessiyalar ---------------- */
-const sessions = new Map();               // token -> {userId, at}
+/* ---------------- Sessiyalar ----------------
+   Xodim sessiyasi BAZADA saqlanadi (staffsess/<token xeshi>): server qayta
+   ishga tushsa ham hech kim chiqib ketmaydi, bir nechta nusxa ham ishlaydi.
+   Bazada tokenning o'zi emas, faqat SHA-256 xeshi turadi. Qisqa muddatli
+   xotira keshi har so'rovda bazaga borishni kamaytiradi.               */
 const SESSION_MS = Number(process.env.SESSION_MAX_AGE_DAYS || 7) * 864e5;
+const SESS_COL = 'staffsess/';
+const sessCache = new Map();              // xesh -> {userId, at, until}
+function tokHash(t) { return crypto.createHash('sha256').update(String(t)).digest('hex'); }
+const sessions = {
+  async create(userId) {
+    const token = newToken();
+    const rec = { userId, at: Date.now() };
+    await store.set(SESS_COL + tokHash(token), rec);
+    return token;
+  },
+  async get(token) {
+    const h = tokHash(token);
+    const c = sessCache.get(h);
+    if (c && c.until > Date.now()) return c.rec;
+    const rec = await store.get(SESS_COL + h);
+    if (rec) sessCache.set(h, { rec, until: Date.now() + 30000 });
+    return rec || null;
+  },
+  async delete(token) {
+    const h = tokHash(token);
+    sessCache.delete(h);
+    if (store.del) await store.del(SESS_COL + h);
+  },
+  /** Foydalanuvchining barcha sessiyalari (parol almashganda, o'chirilganda) */
+  async revokeUser(userId, keepToken) {
+    const keep = keepToken ? tokHash(keepToken) : '';
+    for (const r of await store.list(SESS_COL)) {
+      const h = r.path.slice(SESS_COL.length);
+      if (r.data && r.data.userId === userId && h !== keep) {
+        sessCache.delete(h);
+        if (store.del) await store.del(r.path);
+      }
+    }
+    sessCache.clear();
+  },
+  async cleanup() {
+    let n = 0;
+    for (const r of await store.list(SESS_COL)) {
+      if (!r.data || Date.now() - Number(r.data.at || 0) > SESSION_MS) { if (store.del) await store.del(r.path); n++; }
+    }
+    return n;
+  }
+};
 
 function newToken() { return crypto.randomBytes(24).toString('hex'); }
 function parseCookies(req) {
@@ -371,9 +418,9 @@ function parseCookies(req) {
 async function currentUser(req) {
   const token = parseCookies(req).alb_session;
   if (!token) return null;
-  const s = sessions.get(token);
+  const s = await sessions.get(token);
   if (!s) return null;
-  if (Date.now() - s.at > SESSION_MS) { sessions.delete(token); return null; }
+  if (Date.now() - s.at > SESSION_MS) { await sessions.delete(token); return null; }
   const u = await store.get('users/' + s.userId);
   if (!u || u.active === false) return null;
   return u;
@@ -531,16 +578,16 @@ async function ensureSeed() {
   const users = await store.list('users/');
   if (!users.length) {
     const login = (process.env.SEED_DIRECTOR_LOGIN || 'admin').toLowerCase();
-    // SEED_DIRECTOR_PASSWORD berilmasa — birinchi kirish uchun oddiy parol (1234).
-    // Bu vaqtinchalik: ilova kirgandan keyin uni almashtirishni so'raydi.
+    // SEED_DIRECTOR_PASSWORD berilmasa — tasodifiy parol yaratiladi va FAQAT bir marta
+    // server jurnaliga chiqariladi. Kirgandan keyin almashtirish so'raladi.
     const envPass = process.env.SEED_DIRECTOR_PASSWORD || '';
-    const pass = envPass || 'hayottalim.123';
+    const pass = envPass || crypto.randomBytes(9).toString('base64').replace(/[+/=]/g, 'x');
     await store.set('users/usr_admin', Object.assign({
       id: 'usr_admin', login, name: 'Direktor', role: 'direktor', staffId: null,
       active: true, isDefault: !envPass, createdAt: stamp()
     }, makePassword(pass)));
     console.log('  Direktor hisobi yaratildi: ' + login +
-      (envPass ? '' : ' (parol: hayottalim.123 — kirgandan keyin almashtiring!)'));
+      (envPass ? '' : ' (vaqtinchalik parol: ' + pass + ' — kirgandan keyin almashtiring!)'));
   }
 }
 
@@ -862,6 +909,9 @@ async function generateInvoicesServer(ym, user) {
     } catch (e) { /* hujjat yo'q — chegirma ham yo'q */ }
   }
 
+  const pauses = (await store.list('pauses/')).map(x => x.data)
+    .filter(p => p && p.from && p.status !== 'bekor' && p.active !== false);
+
   for (const m of mems) {
     try {
       if (m.status !== 'faol' || !A.membershipActiveIn(m, ym)) continue;
@@ -874,11 +924,28 @@ async function generateInvoicesServer(ym, user) {
 
       /* O'tgan oyda sababli qoldirilgan darslar uchun chegirma */
       const missed = A.excusedCount(prevLessons[m.groupId], m.id);
-      const credit = Math.min(amt.final, A.excusedCredit(g, ym, missed));
-      const note = credit
+      let credit = Math.min(amt.final, A.excusedCredit(g, ym, missed));
+      let note = credit
         ? A.monthLabel(prevYm) + ': ' + missed + ' ta sababli dars — ' +
           A.som(credit) + ' so’m chegirildi'
         : '';
+
+      /* O'quvchi tanaffusi (pauza): shu oyning tanaffusdagi darslari uchun pul olinmaydi.
+         Butun oy tanaffusda bo'lsa — hisob umuman yaratilmaydi.
+         Sozlamada o'chirish mumkin: settings.pauseBilling === false. */
+      if (settings.pauseBilling !== false) {
+        const myPauses = pauses.filter(p => String(p.studentId) === String(m.studentId));
+        if (myPauses.length) {
+          const planned = A.monthLessons(g, ym, null).map(l => l.date);
+          const paused = planned.filter(d => myPauses.some(p => d >= p.from && d <= (p.to || '9999-12-31'))).length;
+          if (planned.length && paused >= planned.length) { skipped++; continue; }
+          const pc = Math.min(amt.final - credit, A.excusedCredit(g, ym, paused));
+          if (pc > 0) {
+            credit += pc;
+            note = (note ? note + '; ' : '') + paused + ' ta dars tanaffusda — ' + A.som(pc) + ' so’m chegirildi';
+          }
+        }
+      }
 
       const due = A.dueDateOf(m, ym, settings);
       await store.set('invoices/' + id, Object.assign({
@@ -1070,6 +1137,22 @@ async function generateLessonAudio(lesson, user, job) {
   job.running = false; job.finishedAt = stamp();
 }
 
+/* O'quvchi yuklashlari uchun kvota: disk/baza cheksiz to'lmasin */
+const STUDENT_FILES_DAY = Number(process.env.STUDENT_FILES_DAY || 40);
+const STUDENT_BYTES_MAX = Number(process.env.STUDENT_BYTES_MAX || 300 * 1024 * 1024);
+async function studentUploadBlocked(sid) {
+  const mine = (await store.list('files/')).map(r => r.data)
+    .filter(f => f && f.byKind === 'oquvchi' && String(f.by) === String(sid));
+  const today = stamp().slice(0, 10);
+  if (mine.filter(f => String(f.at || '').slice(0, 10) === today).length >= STUDENT_FILES_DAY) {
+    return 'Bugungi yuklash chegarasiga yetdingiz. Ertaga davom eting.';
+  }
+  if (mine.reduce((n, f) => n + (Number(f.bytes) || 0), 0) >= STUDENT_BYTES_MAX) {
+    return 'Fayllaringiz hajmi chegaraga yetdi. Markaz bilan bog’laning.';
+  }
+  return '';
+}
+
 async function fileVisibleToStudents(rec, studentIds) {
   if (!rec) return false;
   const ids = (studentIds || []).map(String);
@@ -1112,6 +1195,7 @@ async function maintenanceTick() {
   try { done.quizSess = await quiz.cleanup(store); } catch (e) { }
   try { done.links = await link.cleanup(store); } catch (e) { }
   try { done.sessions = await kabsess.cleanup(store); } catch (e) { }
+  try { done.staffSessions = await sessions.cleanup(); } catch (e) { }
   try { done.files = await files.sweep(store); } catch (e) { }
   const total = Object.values(done).reduce((a, b) => a + (Number(b) || 0), 0);
   if (total) {
@@ -1288,8 +1372,9 @@ async function guardWrite(user, p, method, next) {
       data.tgChat = old.tgChat;               // botga ulanishni mijoz o'zgartira olmaydi
       data.tgTitle = old.tgTitle;
       data.tgAt = old.tgAt;
+      data.tgPending = old.tgPending;
     } else {
-      delete data.tgChat; delete data.tgTitle; delete data.tgAt;
+      delete data.tgChat; delete data.tgTitle; delete data.tgAt; delete data.tgPending;
     }
     /* Guruh kodi — MARKAZ o'zi yozadi va u o'zgarmaydi.
        Avval server kodni majburan 4 xonali raqamga almashtirardi, shuning
@@ -1447,11 +1532,26 @@ async function filterReadDoc(user, p, data) {
     return data;
   }
 
+  /* Server ichki holati: faqat markaz sozlamasi (bot tokenisiz) o'qiladi */
+  if (col === 'meta') {
+    if (p !== 'meta/settings') return false;
+    const st = Object.assign({}, data);
+    if (st.bot) st.bot = Object.assign({}, st.bot, { token: undefined });
+    return st;
+  }
+  /* Bootstrap bilan AYNAN bir xil qoida: kolleksiyaga ruxsat + yozuv egaligi */
+  if (COLLECTIONS.indexOf(col) >= 0 && seg.length === 2) {
+    if (!allowCollectionFor(user, col)) return false;
+    const sc = (await teacherScope(user)) || { gid: {}, sid: {} };
+    const byPath = {};
+    if (col === 'files' && data.refPath) byPath[data.refPath] = await store.get(String(data.refPath));
+    const f = scopeDoc(user, col, data, sc, byPath);
+    if (!f) return false;
+    data = f;
+  }
+
   if (user.role === 'oqituvchi') {
     const sc = await teacherScope(user);
-    if (col === 'groups' && !sc.gid[data.id]) return false;
-    if (col === 'memberships' && !sc.gid[data.groupId]) return false;
-    if (col === 'students' && !sc.sid[data.id]) return false;
     if (col === 'lessons') {
       const gidPart = String(seg[1] || '').split('__')[0];
       if (!sc.gid[gidPart]) return false;
@@ -1676,6 +1776,22 @@ async function handleApi(req, res, url) {
     const isParent = ses.kind === 'parent';
     const sub = route.slice('kabinet/'.length);
 
+    /* Har so'rovda sessiya egasini qayta tekshiramiz: ota-ona o'chirilgan/
+       o'chirib qo'yilgan yoki o'quvchi o'chirilgan bo'lsa — kirish yopiladi. */
+    if (isParent) {
+      const par = await store.get(parents.COL + ses.parentId);
+      if (!par || par.active === false) {
+        return send(res, 401, { error: 'Kirish kerak.' }, { 'Set-Cookie': kabsess.clearHeader() });
+      }
+      const now = (par.studentIds || []).map(String);
+      ses.studentIds = (ses.studentIds || []).map(String).filter(x => now.indexOf(x) >= 0);
+    } else {
+      const stx = await store.get('students/' + ses.studentId);
+      if (!stx || stx.status === 'o’chirilgan') {
+        return send(res, 401, { error: 'Kirish kerak.' }, { 'Set-Cookie': kabsess.clearHeader() });
+      }
+    }
+
     /* O'zgartiruvchi so'rov uchun CSRF */
     function csrfOk() {
       const got = String(req.headers['x-kab-csrf'] || '');
@@ -1831,6 +1947,8 @@ async function handleApi(req, res, url) {
     if (sub === 'files/upload' && req.method === 'POST') {
       if (isParent) return send(res, 403, { error: 'Faylni o’quvchining o’zi yuklaydi.' });
       const sid = mine[0];
+      const quotaMsg = await studentUploadBlocked(sid);
+      if (quotaMsg) return send(res, 429, { error: quotaMsg });
       const body = await readBody(req, BODY_MAX_FILE);
       const type = String(body.type || '').toLowerCase();
       if (!/^image\/(jpeg|png|webp)$|^application\/pdf$/.test(type)) {
@@ -1881,6 +1999,8 @@ async function handleApi(req, res, url) {
       const sid = mine[0];
       const op = sub.slice('course/'.length);
       if (op === 'upload') {
+        const quotaMsg = await studentUploadBlocked(sid);
+        if (quotaMsg) return send(res, 429, { error: quotaMsg });
         const body = await readBody(req, BODY_MAX_FILE);
         const type = String(body.type || '').toLowerCase();
         if (!/^image\/(jpeg|png|webp)$|^application\/pdf$|^audio\/(webm|mp4|mpeg|ogg|wav)(;.*)?$/.test(type)) {
@@ -1968,6 +2088,10 @@ async function handleApi(req, res, url) {
   if (route === 'test/submit' && req.method === 'POST') {
     const ip = clientIp(req);
     const body = await readBody(req);
+    /* Natija faqat telefon raqami bilan beriladi (sahifadagi qoida serverda ham) */
+    if (String(body.phone || '').replace(/\D/g, '').length < 9) {
+      return send(res, 400, { error: 'Natijani ko‘rish uchun telefon raqamingizni yozing.', reason: 'telefon' });
+    }
     const r = await levels.submit(store, {
       stamp, sessionId: body.sessionId, answers: body.answers,
       name: body.name, phone: body.phone
@@ -2441,8 +2565,7 @@ async function handleApi(req, res, url) {
       const weak = isWeakPassword(pass, login);
       if (!!u.isDefault !== weak) { u.isDefault = weak; await store.set('users/' + u.id, u); }
     }
-    const token = newToken();
-    sessions.set(token, { userId: u.id, at: Date.now() });
+    const token = await sessions.create(u.id);
     return send(res, 200, { user: safeUser(u) }, {
       'Set-Cookie': 'alb_session=' + token + '; HttpOnly; SameSite=Lax; Path=/' + (IS_PROD ? '; Secure' : '') + '; Max-Age=' +
         Math.floor(SESSION_MS / 1000) + (process.env.NODE_ENV === 'production' ? '; Secure' : '')
@@ -2451,7 +2574,7 @@ async function handleApi(req, res, url) {
 
   if (route === 'logout' && req.method === 'POST') {
     const token = parseCookies(req).alb_session;
-    if (token) sessions.delete(token);
+    if (token) await sessions.delete(token);
     return send(res, 200, { ok: true }, { 'Set-Cookie': 'alb_session=; HttpOnly; SameSite=Lax; Path=/' + (IS_PROD ? '; Secure' : '') + '; Max-Age=0' });
   }
 
@@ -2636,9 +2759,12 @@ async function handleApi(req, res, url) {
     }
     if (req.method === 'POST') {
       const body = await readBody(req);
+      /* Ikki marta bosish yoki ikki xodim bir vaqtda — bitta navbat bilan */
+      return withLock('paybank', async () => {
       if (route === 'paybank/reject') {
         const c = await store.get('payclaim/' + String(body.claimId || ''));
         if (!c) return send(res, 404, { error: 'Topilmadi.' });
+        if (c.status === 'tasdiqlandi') return send(res, 400, { error: 'Bu da’vo allaqachon tasdiqlangan — rad etib bo’lmaydi.' });
         c.status = 'rad'; c.closedBy = user.name;
         await store.set('payclaim/' + c.id, c);
         return send(res, 200, { ok: true });
@@ -2669,6 +2795,8 @@ async function handleApi(req, res, url) {
           return send(res, 400, { error: e.message });
         }
       }
+      return send(res, 404, { error: 'Topilmadi.' });
+      });
     }
     return send(res, 404, { error: 'Topilmadi.' });
   }
@@ -2677,6 +2805,27 @@ async function handleApi(req, res, url) {
   if (route === 'file' && req.method === 'POST') {
     if (!A.can(user, 'curriculum.edit') && !A.can(user, 'lesson.log')) return nope();
     const body = await readBody(req, BODY_MAX_FILE);
+    /* Fayl qaysi yozuvga bog'lanadi — faqat ma'lum turdagi, mavjud yozuvlarga.
+       O'qituvchi faqat o'z guruhi/o'quvchisiga tegishli yozuvga bog'lay oladi. */
+    if (body.refPath) {
+      const ref = String(body.refPath);
+      const rc = ref.split('/')[0];
+      if (['materials', 'homework', 'lessonlog', 'asks'].indexOf(rc) < 0 || ref.split('/').length !== 2) {
+        return send(res, 400, { error: 'Fayl bog‘lanadigan yozuv noto‘g‘ri.' });
+      }
+      /* Dars yozuvi: kalit "<guruh>__<sana>" — yozuv hali bo'lmasligi mumkin, guruh bo'lsa yetadi */
+      const refDoc = rc === 'lessonlog'
+        ? ((await store.get(ref)) || ((await store.get('groups/' + ref.split('/')[1].split('__')[0])) ? { groupId: ref.split('/')[1].split('__')[0] } : null))
+        : await store.get(ref);
+      if (!refDoc) return send(res, 400, { error: 'Fayl bog‘lanadigan yozuv topilmadi.' });
+      if (user.role === 'oqituvchi') {
+        const sc = await teacherScope(user);
+        const probe = { refPath: ref, by: '', byKind: 'xodim' };
+        if (!require('./shared').teacherSeesFile(probe, user, sc.gid, sc.sid, { [ref]: refDoc })) {
+          return nope('Bu yozuv sizga tegishli emas.');
+        }
+      }
+    }
     const r = await files.save(store, {
       name: body.name, type: body.type, dataBase64: body.data,
       purpose: body.purpose, refPath: body.refPath,
@@ -2696,6 +2845,13 @@ async function handleApi(req, res, url) {
     if (!A.can(user, 'group.view') && !A.can(user, 'student.view')) return nope();
     const rec = await files.meta(store, String(url.searchParams.get('id') || ''));
     if (!rec) return send(res, 404, { error: 'Fayl topilmadi.' });
+    if (user.role === 'oqituvchi') {
+      const sc = await teacherScope(user);
+      const refDoc = rec.refPath ? await store.get(String(rec.refPath)) : null;
+      if (!require('./shared').teacherSeesFile(rec, user, sc.gid, sc.sid, { [rec.refPath]: refDoc })) {
+        return send(res, 404, { error: 'Fayl topilmadi.' });
+      }
+    }
     const buf = await files.readBody(store, rec);
     if (!buf) return send(res, 404, { error: 'Fayl topilmadi.' });
     res.writeHead(200, {
@@ -2884,7 +3040,7 @@ async function handleApi(req, res, url) {
     const body = await readBody(req);
     const r = await parents.newCode(store, String(body.id || ''), { stamp });
     if (!r.ok) return send(res, 404, { error: 'Ota-ona topilmadi.' });
-    await kabsess.revokeForStudent(store, '__parent__' + r.rec.id, { stamp });
+    await kabsess.revokeForParent(store, r.rec.id, { stamp });
     await writeAudit(user, 'Ota-ona kodi yangilandi', r.rec.name, '');
     return send(res, 200, { ok: true, code: r.rec.code });
   }
@@ -2894,6 +3050,7 @@ async function handleApi(req, res, url) {
     const id = String(body.id || '');
     if (!await store.get(parents.COL + id)) return send(res, 404, { error: 'Topilmadi.' });
     if (store.del) await store.del(parents.COL + id);
+    await kabsess.revokeForParent(store, id, { stamp });
     await writeAudit(user, 'Ota-ona hisobi o’chirildi', id, '');
     return send(res, 200, { ok: true });
   }
@@ -2901,6 +3058,10 @@ async function handleApi(req, res, url) {
   /* ---- Hisobotlar ---- */
   if (route === 'report/student' && req.method === 'GET') {
     if (!A.can(user, 'reports.learning') && !A.can(user, 'student.view')) return nope();
+    if (user.role === 'oqituvchi') {
+      const sc = await teacherScope(user);
+      if (!sc.sid[String(url.searchParams.get('id') || '')]) return nope('Bu o‘quvchi sizga tegishli emas.');
+    }
     const r = await progress.forStudent(store, String(url.searchParams.get('id') || ''), {
       from: url.searchParams.get('from'), to: url.searchParams.get('to')
     });
@@ -2937,6 +3098,8 @@ async function handleApi(req, res, url) {
     const oldCode = st.code || '';
     st.code = code;
     await store.set('students/' + id, st);
+    // eski kod bilan ochilgan o'quvchi sessiyalari yopiladi
+    await kabsess.revokeForStudent(store, id, { stamp, kind: 'student' });
     await writeAudit(user, 'O’quvchi kodi yangilandi',
       (st.lastName || '') + ' ' + (st.firstName || ''), oldCode + ' → ' + code);
     return send(res, 200, { ok: true, code });
@@ -3015,6 +3178,7 @@ async function handleApi(req, res, url) {
     const pw = String(crypto.randomInt(100000, 1000000));
     const salt = crypto.randomBytes(16).toString('hex');
     await store.set('kabpass/' + sid, { salt, hash: kabHash(pw, salt), at: stamp(), by: 'admin' });
+    await kabsess.revokeForStudent(store, sid, { stamp, kind: 'student' });
     await writeAudit(user, 'Kabinet paroli yaratildi', (st.lastName || '') + ' ' + (st.firstName || ''), '');
     const base = String(process.env.PUBLIC_URL || process.env.SITE_URL || '').replace(/\/$/, '');
     return send(res, 200, { ok: true, login: String(st.code), phone: String(st.phone || ''), password: pw, url: base ? base + '/#kabinet' : '' });
@@ -3085,6 +3249,32 @@ async function handleApi(req, res, url) {
     }
     await writeAudit(user, 'Guruhga Telegram xabari', g.name || gid, text.slice(0, 80));
     return send(res, 200, { ok: true });
+  }
+
+  /* ---------- Telegram guruh ulanishini tasdiqlash / rad etish / uzish ---------- */
+  if (route === 'group/tglink' && req.method === 'POST') {
+    if (!A.can(user, 'group.edit')) return nope();
+    const body = await readBody(req);
+    const gid = String(body.groupId || '');
+    if (!/^[A-Za-z0-9_\-.]+$/.test(gid)) return send(res, 400, { error: 'Guruh noto’g’ri.' });
+    const g = await store.get('groups/' + gid);
+    if (!g) return send(res, 404, { error: 'Guruh topilmadi.' });
+    const act = String(body.action || '');
+    if (act === 'approve') {
+      const r = await require('./bot').approveGroupLink(gid);
+      if (!r.ok) return send(res, 400, { error: r.error });
+      await writeAudit(user, 'Telegram guruhi ulandi', g.name || gid, r.group.tgTitle || '');
+      return send(res, 200, { ok: true, group: r.group });
+    }
+    if (act === 'reject' || act === 'unlink') {
+      const rec = Object.assign({}, g);
+      delete rec.tgPending;
+      if (act === 'unlink') { delete rec.tgChat; delete rec.tgTitle; delete rec.tgAt; }
+      await store.set('groups/' + gid, rec);
+      await writeAudit(user, act === 'unlink' ? 'Telegram guruhi uzildi' : 'Telegram ulanish so’rovi rad etildi', g.name || gid, '');
+      return send(res, 200, { ok: true, group: rec });
+    }
+    return send(res, 400, { error: 'Noma’lum amal.' });
   }
 
   /* ---------- Suhbat: xabar qo'shish faqat shu yerda ----------
@@ -3232,9 +3422,15 @@ async function handleApi(req, res, url) {
         await writeAudit(user, 'Zaxira nusxa olindi', r.name, r.count + ' yozuv');
         return send(res, 200, { ok: true, file: r });
       } catch (e) {
+        console.error('backup/run:', e);
         await backup.writeState(store, { lastError: String(e.message), lastErrorAt: backup.tzStamp() });
-        return send(res, 500, { error: e.message });
+        return send(res, 500, { error: 'Zaxira olinmadi. Server jurnalini tekshiring.' });
       }
+    }
+    /* Zaxira faylida parol xeshlari, kabinet kodlari va bot tokeni bor —
+       uni yuklab olish va undan tiklash faqat direktorga. */
+    if ((route === 'backup/file' || route === 'backup/restore' || route === 'backup/preview') && user.role !== 'direktor') {
+      return send(res, 403, { error: 'Zaxira faylini faqat direktor ocha va tiklay oladi.' });
     }
     if (route === 'backup/file' && req.method === 'GET') {
       const name = String(url.searchParams.get('name') || '');
@@ -3253,6 +3449,11 @@ async function handleApi(req, res, url) {
       const body = await readBody(req);
       if (String(body.confirm || '') !== 'TIKLASH') {
         return send(res, 400, { error: 'Tasdiqlash so’zi noto’g’ri.' });
+      }
+      /* Tiklash kirish hisoblarini ham almashtiradi — parol qayta so'raladi */
+      const me = await store.get('users/' + user.id);
+      if (!me || !verifyPassword(me, String(body.password || ''))) {
+        return send(res, 403, { error: 'Parol noto’g’ri.' });
       }
       const dump = body.name ? backupReadSafe(body.name) : body.dump;
       if (!dump) return send(res, 400, { error: 'Zaxira berilmadi.' });
@@ -3326,6 +3527,11 @@ async function handleApi(req, res, url) {
         }
       }
       await store.set(p, body.data);
+      /* Parol almashsa yoki hisob o'chirilsa — boshqa qurilmalardagi kirishlar yopiladi */
+      if (p.indexOf('users/') === 0 && (String(body.password || '') || body.data.active === false)) {
+        const uid = p.split('/')[1];
+        await sessions.revokeUser(uid, uid === user.id ? parseCookies(req).alb_session : '');
+      }
       await writeAudit(user, body.action || 'Ma’lumot saqlandi', body.entity || p, body.details || '');
       // Bot navbatchisini uyg'otamiz (tasdiq/ e'lon darhol ketsin, bo'sh vaqtda esa baza tinch)
       if (p.indexOf('botreq/') === 0 || p.indexOf('botout/') === 0) {
@@ -3340,6 +3546,7 @@ async function handleApi(req, res, url) {
       const gd = await guardWrite(user, p, 'DELETE', null);
       if (gd.error) return send(res, gd.code || 403, { error: gd.error });
       await store.del(p);
+      if (p.indexOf('users/') === 0) await sessions.revokeUser(p.split('/')[1]);
       await writeAudit(user, 'Yozuv o’chirildi', p, '');
       return send(res, 200, { ok: true });
     }
@@ -3425,6 +3632,15 @@ function serveStatic(req, res, pathname) {
         'Cache-Control': codeFile ? 'no-cache' : 'public, max-age=86400'
       };
       if (tag) head.ETag = tag;
+      /* Boshqa HTML sahifalarga ham (masalan qissa.html) bosh sahifadagidek CSP */
+      if (ext === '.html') {
+        const hashes = [];
+        String(data).replace(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi, function (m, body) {
+          hashes.push("'sha256-" + crypto.createHash('sha256').update(body, 'utf8').digest('base64') + "'");
+          return m;
+        });
+        head['Content-Security-Policy'] = pageCsp(hashes);
+      }
       /* Matnli fayllar (js, css, html, svg) siqib yuboriladi —
          mazmuni o'zgarmaydi, faqat tarmoqdagi hajmi kamayadi. */
       return sendMaybeZip(req, res, 200, head, data);

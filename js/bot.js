@@ -39,6 +39,8 @@
       payCard: s.payCard || '',
       payHolder: s.payHolder || '',
       payBankChat: s.payBankChat || '',
+      payBankSenders: s.payBankSenders || '',
+      payLooseMatch: s.payLooseMatch === true,
       payPreDays: s.payPreDays == null ? 2 : Number(s.payPreDays)
     };
   }
@@ -580,6 +582,16 @@
           help: 'Karta SMS/bot bildirishnomalari tushadigan kanal. Botni shu kanalga administrator qilib qo’shing — raqamni bot o’zi yozib yuboradi.'
         },
         {
+          name: 'payBankSenders', label: 'Guruhda bildirishnoma yuboruvchi (Telegram ID, ixtiyoriy)', value: conf.payBankSenders,
+          placeholder: '123456789',
+          help: 'Bildirishnomalar GURUHGA tushsa: faqat bot yozgan xabar to’lov hisoblanadi. Odam yuborishi kerak bo’lsa — uning Telegram ID sini yozing.'
+        },
+        {
+          name: 'payLooseMatch', label: 'Dumsiz (yaxlit) summani avtomatik biriktirish', type: 'select',
+          value: conf.payLooseMatch ? 'ha' : 'yoq',
+          options: [{ value: 'yoq', label: 'Yo’q — qo’lda tasdiqlansin (xavfsiz)' }, { value: 'ha', label: 'Ha — faqat bitta mos da’vo bo’lsa' }]
+        },
+        {
           name: 'payPreDays', label: 'To’lovdan necha kun oldin eslatilsin', type: 'number', value: conf.payPreDays,
           help: '0 — oldindan eslatma yuborilmaydi'
         }
@@ -621,6 +633,8 @@
                   payCard: String(v.payCard || '').replace(/[^\d ]/g, '').trim(),
                   payHolder: String(v.payHolder || '').trim(),
                   payBankChat: String(v.payBankChat || '').trim(),
+                  payBankSenders: String(v.payBankSenders || '').replace(/[^\d, ]/g, '').trim(),
+                  payLooseMatch: v.payLooseMatch === 'ha',
                   payPreDays: Math.max(0, Number(v.payPreDays) || 0),
                   username: String(v.username || '').replace('@', ''),
                   welcome: v.welcome,

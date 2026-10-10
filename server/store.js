@@ -121,7 +121,8 @@ function makePostgres(url) {
   const conf = pgConf(url);
   const pool = new Pool({
     connectionString: url,
-    ssl: conf.ssl ? { rejectUnauthorized: false } : false,
+    // Sertifikat sukut bo'yicha tekshiriladi. O'z-o'zidan imzolangan sertifikatli baza uchun: PG_SSL_NO_VERIFY=1
+    ssl: conf.ssl ? { rejectUnauthorized: process.env.PG_SSL_NO_VERIFY !== '1' } : false,
     max: Number(process.env.PG_POOL_MAX || 4),
     idleTimeoutMillis: Number(process.env.PG_IDLE_MS || 15000),   // bo'sh ulanish yopilsin
     connectionTimeoutMillis: Number(process.env.PG_CONNECT_MS || 15000),

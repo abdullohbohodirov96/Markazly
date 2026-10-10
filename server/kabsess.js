@@ -86,9 +86,24 @@ async function revokeForStudent(store, studentId, opts) {
   for (const r of rows) {
     const d = r.data;
     if (!d || d.revokedAt) continue;
+    if (opts && opts.kind && d.kind !== opts.kind) continue;
     const mine = d.studentId === String(studentId) ||
       (Array.isArray(d.studentIds) && d.studentIds.indexOf(String(studentId)) >= 0);
     if (!mine) continue;
+    d.revokedAt = nowStamp(opts);
+    await store.set(r.path, d);
+    n++;
+  }
+  return n;
+}
+
+/** Ota-onaga tegishli barcha sessiyalarni yopish (kod yangilanganda yoki o'chirilganda) */
+async function revokeForParent(store, parentId, opts) {
+  const rows = await store.list(COL);
+  let n = 0;
+  for (const r of rows) {
+    const d = r.data;
+    if (!d || d.revokedAt || d.kind !== 'parent' || d.parentId !== String(parentId)) continue;
     d.revokedAt = nowStamp(opts);
     await store.set(r.path, d);
     n++;
@@ -127,6 +142,6 @@ async function cleanup(store) {
 }
 
 module.exports = {
-  create, read, revoke, revokeForStudent, cleanup,
+  create, read, revoke, revokeForStudent, revokeForParent, cleanup,
   cookieHeader, clearHeader, COOKIE, COL, TTL_MS
 };

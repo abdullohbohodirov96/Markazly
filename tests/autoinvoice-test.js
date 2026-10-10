@@ -126,6 +126,22 @@ function thisMonth() {
   ok('Mavjudlari o’tkazib yuborildi (' + manual.json.skipped + ')', manual.json.skipped >= 2, String(manual.json.skipped));
   eq('Sinov guruhida endi 3 ta', mine(await req('/api/collection?name=invoices', { cookie })).length, 3);
 
+  /* --- 5b. Tanaffus (pauza) billingga ta'sir qiladi --- */
+  section('5b. Tanaffusdagi o’quvchi');
+  const lastDay = new Date(Date.UTC(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)), 0)).getUTCDate();
+  await put('students/ai5', { id: 'ai5', firstName: 'Besh', lastName: 'Pauza', status: 'faol' });
+  await put('memberships/aim5', { id: 'aim5', studentId: 'ai5', groupId: 'aig1', status: 'faol', joinedAt: ym + '-01' });
+  await put('students/ai6', { id: 'ai6', firstName: 'Olti', lastName: 'Yarim', status: 'faol' });
+  await put('memberships/aim6', { id: 'aim6', studentId: 'ai6', groupId: 'aig1', status: 'faol', joinedAt: ym + '-01' });
+  eq('Butun oyga tanaffus', (await req('/api/pause', { method: 'POST', cookie, body: { studentId: 'ai5', from: ym + '-01', to: ym + '-' + lastDay } })).status, 200);
+  eq('Oyning birinchi yarmiga tanaffus', (await req('/api/pause', { method: 'POST', cookie, body: { studentId: 'ai6', from: ym + '-01', to: ym + '-14' } })).status, 200);
+  await req('/api/invoices/generate', { method: 'POST', cookie, body: { month: ym } });
+  const invs5 = mine(await req('/api/collection?name=invoices', { cookie }));
+  ok('Butun oy tanaffusda — hisob yaratilmadi', !invs5.some(i => i.studentId === 'ai5'));
+  const i6 = invs5.find(i => i.studentId === 'ai6');
+  ok('Yarim oy tanaffus — hisob kamaydi', i6 && i6.final < 400000 && i6.final > 0, JSON.stringify(i6 && { final: i6.final, note: i6.note }));
+  ok('Izohda tanaffus aytilgan', i6 && /tanaffus/.test(i6.note || ''), i6 && i6.note);
+
   /* --- 6. Holat va direktorga xabar --- */
   section('6. Natija saqlanadi va direktorga xabar boradi');
   const st1 = await req('/api/invoices/auto', { cookie });

@@ -69,7 +69,8 @@ async function req(p, o = {}) {
 }
 const login = (l, p) => req('/api/login', { method: 'POST', body: { login: l, password: p } }).then(r => r.cookie);
 const start = (lg) => req('/api/test/start', { method: 'POST', body: lg ? { lang: lg } : {} });
-const submit = (b) => req('/api/test/submit', { method: 'POST', body: b });
+const submit = (b) => req('/api/test/submit', { method: 'POST', body: Object.assign({ phone: '+998 90 111 22 33' }, b) });
+const submitRaw = (b) => req('/api/test/submit', { method: 'POST', body: b });
 
 (async () => {
   if (!await bootServer()) { stopServer(); console.error('Sinov serveri ko’tarilmadi.'); process.exit(1); }
@@ -199,6 +200,11 @@ const submit = (b) => req('/api/test/submit', { method: 'POST', body: b });
   ok('Bootstrap ichida javob yo’q', !/"answer"\s*:\s*\d/.test(boot.text));
 
   /* ---------- 3. Hech narsa belgilamasdan topshirish ---------- */
+  section('2b. Telefonsiz natija berilmaydi');
+  const noPhone = await submitRaw({ sessionId: s1.json.id, answers: [] });
+  eq('Telefonsiz topshirish rad etildi', noPhone.status, 400);
+  ok('Sessiya ishlatilmay qoldi (telefon yozib qayta yuborsa bo’ladi)', !/ishlatilgan|allaqachon/.test(noPhone.text));
+
   section('3. Bilmagan odam past daraja oladi');
   const empty = await submit({ sessionId: s1.json.id, answers: [] });
   eq('Javob qaytdi', empty.status, 200);

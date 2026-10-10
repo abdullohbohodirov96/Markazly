@@ -120,7 +120,8 @@ async function summary(store, parent, progress) {
     const base = await kabinet.summary(store, st);
     const prog = progress ? await progress.forStudent(store, st.id) : null;
     kids.push({
-      student: base.student,
+      // bolaning shaxsiy kodi (u bilan bolaning kabinetiga kiriladi) ota-onaga ko'rsatilmaydi
+      student: Object.assign({}, base.student, { code: undefined }),
       groups: base.groups,
       finance: base.finance,
       attendance: base.attendance,

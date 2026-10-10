@@ -103,6 +103,13 @@
         h('span', { class: 'small muted' }, 'Guruh kodi'),
         h('b', { class: 'mono' }, code)
       ]),
+      g.tgPending && App.can('group.edit') ? h('div', { class: 'banner info' }, h('div', {}, [
+        h('b', {}, 'Ulanish so’rovi: '), '“' + (g.tgPending.title || '') + '” (' + (g.tgPending.at || '') + ')',
+        h('div', { class: 'rowflex', style: 'margin-top:6px' }, [
+          h('button', { class: 'btn sm primary', type: 'button', onclick: function () { tgAct(g, 'approve', App); } }, 'Tasdiqlash'),
+          h('button', { class: 'btn sm', type: 'button', onclick: function () { tgAct(g, 'reject', App); } }, 'Rad etish')
+        ])
+      ])) : null,
       h('div', { class: 'tg-info' }, linked
         ? [
           UI.pill('Telegramga ulangan', 'ok'),
@@ -120,10 +127,22 @@
           ? h('button', {
             class: 'btn sm primary', type: 'button',
             onclick: function () { groupMessageForm(g); }
-          }, [UI.icon('chat'), 'Guruhga xabar']) : null
+          }, [UI.icon('chat'), 'Guruhga xabar']) : null,
+        (linked && App.can('group.edit'))
+          ? h('button', { class: 'btn sm', type: 'button', onclick: function () { tgAct(g, 'unlink', App); } }, 'Uzish')
+          : null
       ].filter(Boolean))
-    ]);
+    ].filter(Boolean));
     return UI.card('Telegram guruhi', body);
+  }
+
+  async function tgAct(g, action, App) {
+    try {
+      var r = await D.api('POST', 'api/group/tglink', { groupId: g.id, action: action });
+      if (r && r.group) { D.col.groups = D.col.groups || {}; D.col.groups[g.id] = r.group; }
+      UI.toast(action === 'approve' ? 'Ulandi.' : action === 'unlink' ? 'Uzildi.' : 'Rad etildi.', 'ok');
+      App.render();
+    } catch (e) { UI.toast(e.message || 'Bajarilmadi', 'bad'); }
   }
 
   function groupMessageForm(g) {
@@ -726,7 +745,7 @@
       var fs = h('fieldset', {}, [
         h('legend', {}, 'Birinchi hisob (' + A.monthLabel(ym) + ')'),
         h('p', { class: 'small muted', style: 'margin:0 0 8px' },
-          'To’lov kuni — qo’shilgan sana: har oy ' + Math.min(28, day) + '-sanada to’laydi ' +
+          'To’lov kuni — qo’shilgan sana: har oy ' + Math.min(31, day) + '-sanada to’laydi ' +
           '(' + A.dateLabel(joined) + ' dan boshlab bir oy uchun to’liq narx).')
       ]);
 

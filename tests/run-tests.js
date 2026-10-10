@@ -324,7 +324,9 @@ function section(t) { results.push('\n' + t); }
   section('15. Pul va sana');
   eq('Pul butun songa yaxlitlanadi', A.som(1234567.4), '1 234 567');
   eq('Kiritilgan matndan son olinadi', A.parseSom('1 250 000 so’m'), 1250000);
-  eq('To’lov muddati 28-kundan oshmaydi', A.dueDateFor('2026-09', 31), '2026-09-28');
+  eq('31-kun: sentabrda oyning oxirgi kuni (30)', A.dueDateFor('2026-09', 31), '2026-09-30');
+  eq('31-kun: fevralda 28', A.dueDateFor('2026-02', 31), '2026-02-28');
+  eq('31-kun: oktabrda 31 (erta tushmaydi)', A.dueDateFor('2026-10', 31), '2026-10-31');
   eq('Telefon normallashtiriladi', A.normPhone('901234567'), '+998901234567');
 
   /* ---------------- 16. Alohida ruxsatlar ---------------- */

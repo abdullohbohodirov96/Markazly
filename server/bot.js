@@ -121,7 +121,7 @@ async function setState(chatId, st) {
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   // chalkashadigan harflar yo'q (O/0, I/1)
 function makeCode() {
   let s = '';
-  for (let i = 0; i < 6; i++) s += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+  for (let i = 0; i < 6; i++) s += CODE_CHARS[require('crypto').randomInt(CODE_CHARS.length)];
   return s;
 }
 function normCode(t) {
@@ -684,25 +684,51 @@ async function linkGroupChat(chatId, title) {
       'Kodni ERP’dagi guruh sahifasidan olasiz. Nomni o’zgartirgach <code>/ulash</code> deb yozing.');
     return null;
   }
-  if (r.error === 'topilmadi') {
+  if (r.error === 'topilmadi' || r.error === 'kop') {
+    /* Kod bor-yo'qligini oshkor qilmaymiz (kodlarni taxmin qilib bo'lmasin) */
     await sendMessage(chatId,
-      'Guruh nomidagi kod (' + r.codes.join(', ') + ') markazdagi hech bir guruhga to’g’ri kelmadi. ' +
-      'Kodni tekshirib, <code>/ulash</code> deb yozing.');
-    return null;
-  }
-  if (r.error === 'kop') {
-    await sendMessage(chatId, 'Nomda bir nechta kod bor. Faqat bittasini qoldiring va <code>/ulash</code> deb yozing.');
+      'So’rov qabul qilindi. Agar guruh kodi to’g’ri bo’lsa, markaz administratori ' +
+      'ERP’da tasdiqlagach shu guruhga ulanaman.');
     return null;
   }
   const g = r.group;
-  const already = String(g.tgChat || '') === String(chatId);
-  const rec = Object.assign({}, g, { tgChat: String(chatId), tgTitle: String(title || ''), tgAt: stamp() });
+  /* Shu suhbatga allaqachon ulangan bo'lsa — nomini yangilaymiz, xolos */
+  if (String(g.tgChat || '') === String(chatId)) {
+    const rec = Object.assign({}, g, { tgTitle: String(title || ''), tgAt: stamp() });
+    await store.set('groups/' + g.id, rec);
+    await sendMessage(chatId, '✅ Bog’lanish yangilandi: <b>' + esc(g.name || g.id) + '</b>.');
+    return rec;
+  }
+  /* Yangi ulanish FAQAT xodim tasdig'i bilan: aks holda istalgan odam o'z guruhini
+     nomlab, markaz e'lonlarini o'ziga burib olishi mumkin edi. */
+  const rec = Object.assign({}, g, {
+    tgPending: { chatId: String(chatId), title: String(title || '').slice(0, 120), at: stamp() }
+  });
   await store.set('groups/' + g.id, rec);
   await sendMessage(chatId,
-    (already ? '✅ Bog’lanish yangilandi' : '✅ Ulandim!') + '\n\n' +
-    'Bu guruh <b>' + (g.name || g.id) + '</b> guruhiga bog’landi (kod <code>' + g.code + '</code>).\n' +
-    'Endi shu yerga e’lon, dars va to’lov xabarlarini yubora olaman.');
+    'So’rov qabul qilindi. Agar guruh kodi to’g’ri bo’lsa, markaz administratori ' +
+    'ERP’da tasdiqlagach shu guruhga ulanaman.');
+  try {
+    await notifyStaff('Telegram guruhini ulash so’rovi: “' + esc(String(title || '')) + '” → ' +
+      esc(g.name || g.id) + ' (' + esc(g.code || '') + ').\nERP → Guruhlar → ' + esc(g.name || g.id) +
+      ' → «Telegram guruhi» bo’limida tasdiqlang.');
+  } catch (e) { }
   return rec;
+}
+
+/** ERP'dan: kutilayotgan ulanishni tasdiqlash */
+async function approveGroupLink(gid) {
+  const g = await store.get('groups/' + gid);
+  if (!g || !g.tgPending) return { ok: false, error: 'Kutilayotgan so’rov yo’q.' };
+  const p = g.tgPending;
+  const rec = Object.assign({}, g, { tgChat: p.chatId, tgTitle: p.title, tgAt: stamp() });
+  delete rec.tgPending;
+  await store.set('groups/' + g.id, rec);
+  try {
+    await sendMessage(p.chatId, '✅ Ulandim!\n\nBu guruh <b>' + esc(g.name || g.id) + '</b> guruhiga bog’landi.\n' +
+      'Endi shu yerga e’lon, dars va to’lov xabarlarini yubora olaman.');
+  } catch (e) { }
+  return { ok: true, group: rec };
 }
 
 /** Guruhdan kelgan xabar/hodisa */
@@ -835,7 +861,10 @@ async function finishRegistration(chatId, st, from) {
   const recent = leads.filter(l => A.phoneDigits(l.phone) === digits &&
     Date.parse(String(l.createdAt || '').replace(' ', 'T') + ':00') > Date.now() - 30 * 864e5)[0];
   let lead;
-  if (recent) {
+  /* Qo'lda yozilgan raqam tasdiqlanmagan: boshqa odamning raqamini yozib, uning
+     murojaatini o'z chatiga bog'lab olmasin — bunday holda yangi murojaat ochiladi. */
+  const canMerge = recent && (r.phoneVerified || !recent.chatId || String(recent.chatId) === String(chatId));
+  if (canMerge) {
     lead = Object.assign({}, recent, {
       chatId: String(chatId), region: r.region || recent.region || '',
       src: recent.src || r.src || '', freeLessonAt: stamp()
@@ -895,7 +924,7 @@ async function handleRegistration(chatId, text, contact, from, st) {
         [[{ text: REG_PHONE_BTN, request_contact: true }]]);
       return true;
     }
-    st.reg = Object.assign({}, st.reg, { phone });
+    st.reg = Object.assign({}, st.reg, { phone, phoneVerified: !!(contact && contact.phone_number) });
     st.step = 'reg_region';
     await setState(chatId, st);
     await sendMessage(chatId, 'Qaysi hududdansiz?', regionKeyboard());
@@ -1378,12 +1407,19 @@ async function nextQuiz() {
   return all.slice().sort((a, b) => String(a.sentAt).localeCompare(String(b.sentAt)))[0];
 }
 async function sendQuiz(q, channel) {
+  /* Variantlar har safar aralashtiriladi: bankda to'g'ri javob ko'pincha
+     birinchi-ikkinchi o'rinda turadi — obunachilar buni sezib qolmasin. */
+  const order = q.options.map((_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = require('crypto').randomInt(i + 1);
+    const t = order[i]; order[i] = order[j]; order[j] = t;
+  }
   const res = await quizApi('sendPoll', {
     chat_id: channel,
     question: q.question,
-    options: q.options.map(t => ({ text: t })),
+    options: order.map(i => ({ text: q.options[i] })),
     type: 'quiz',
-    correct_option_id: q.correct,
+    correct_option_id: order.indexOf(q.correct),
     explanation: q.explain || undefined,
     is_anonymous: true
   });
@@ -1504,6 +1540,14 @@ async function confirmClaim(claim, tx) {
 async function onBankPost(chat, msg) {
   const conf = paybot.payConf(await settings());
   if (!paybot.isBankChat(conf, chat)) return false;
+  /* Guruhda xabarni istalgan a'zo yozishi mumkin — shuning uchun guruhdan faqat
+     BOT yuborgan (bank bildirishnoma boti) yoki ruxsat etilgan raqamli yuboruvchi
+     xabari qabul qilinadi. Odam yozgan "Пополнение ..." to'lov hisoblanmaydi. */
+  if (chat.type !== 'channel') {
+    const from = msg.from || {};
+    const allowed = paybot.bankSenders(conf);
+    if (!(from.is_bot || allowed.indexOf(String(from.id)) >= 0)) return true;   // e'tiborsiz, lekin bank chati
+  }
   const text = msg.text || msg.caption || '';
   const tx = await paybot.saveBankTx(payCtx(), text, chat.id, msg.message_id);
   if (tx) { try { await paybot.reconcile(payCtx()); } catch (e) { console.error('paybot:', e.message); } }
@@ -1743,4 +1787,4 @@ const quiz = {
       .sort((a, b) => String(b.date + b.slot).localeCompare(String(a.date + a.slot))).slice(0, 30);
   }
 };
-module.exports = { start, stop, setTransport, makeCode, normCode, wake, notifyStaff, sendToGroup, confirmClaimManual, init, _test, quiz };
+module.exports = { start, stop, setTransport, makeCode, normCode, wake, notifyStaff, sendToGroup, confirmClaimManual, approveGroupLink, init, _test, quiz };

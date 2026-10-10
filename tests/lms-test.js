@@ -575,6 +575,53 @@ const ID = n => R + '_' + n;
   const otherMat = await req('/api/kabinet/file?id=' + fid, { cookie: kab3.cookie });
   eq('O’tilmagan mavzu materiali berilmadi', otherMat.status, 403);
 
+  /* ---------- X. Xavfsizlik tuzatishlari (shablon) ---------- */
+  section('X. Xavfsizlik: o’qituvchi, meta, zaxira, ota-ona sessiyasi');
+  const tBoot = await req('/api/bootstrap', { cookie: teach });
+  ok('O’qituvchiga ota-ona ro’yxati berilmaydi', !Object.keys((tBoot.json.col || {}).parents || {}).length);
+  ok('Bootstrapda ota-ona kodi yo’q', !tBoot.text.includes('"' + pcode + '"'));
+  ok('O’qituvchiga begona guruh savol/test natijalari berilmaydi',
+    !Object.values((tBoot.json.col || {}).quizres || {}).some(r => r.studentId === ID('s3')));
+  ok('Meta ichki hujjatlar bootstrapda yo’q', !Object.keys(tBoot.json.docs || {}).some(k => /^meta\//.test(k)));
+  eq('O’qituvchi ota-ona yozuvini ID bilan ham ololmaydi', (await get('parents/' + par.json.parent.id, teach)).status, 403);
+  const tS1 = await get('students/' + ID('s1'), teach);
+  ok('O’qituvchi o’quvchi kodini ko’rmaydi', tS1.status === 200 && !tS1.json.data.code, JSON.stringify(tS1.json));
+  eq('O’qituvchi meta/autoinvoice yoza olmaydi', (await put('meta/autoinvoice', { lastMonth: '2099-01' }, teach)).status, 403);
+  eq('Direktor ham meta/backupstate ni qo’lda yoza olmaydi', (await put('meta/backupstate', { lastOkDate: '2099-01-01' }, dir)).status, 403);
+  eq('O’qituvchi meta/backupstate ni o’qiy olmaydi', (await get('meta/backupstate', teach)).status, 403);
+  eq('O’qituvchi begona o’quvchi hisobotini ololmaydi', (await req('/api/report/student?id=' + ID('s3'), { cookie: teach })).status, 403);
+  eq('O’z o’quvchisi hisoboti ochiladi', (await req('/api/report/student?id=' + ID('s1'), { cookie: teach })).status, 200);
+
+  const up3 = await req('/api/kabinet/files/upload', { method: 'POST', cookie: kab3.cookie, csrf: kab3.json.csrf,
+    body: { name: 's3.png', type: 'image/png', data: png.toString('base64') } });
+  eq('Begona guruh o’quvchisi fayl yukladi', up3.status, 200, up3.text);
+  eq('O’qituvchi begona o’quvchi faylini ocha olmaydi', (await req('/api/file?id=' + up3.json.file.id, { cookie: teach })).status, 404);
+  eq('Direktor ochadi', (await req('/api/file?id=' + up3.json.file.id, { cookie: dir })).status, 200);
+  const badRef = await req('/api/file', { method: 'POST', cookie: teach, body: { name: 'x.png', type: 'image/png', data: png.toString('base64'), refPath: 'lessonlog/' + ID('g2') + '__x' } });
+  ok('O’qituvchi faylni begona yozuvga bog’lay olmaydi (' + badRef.status + ')', badRef.status === 400 || badRef.status === 403);
+
+  ok('Ota-ona kabinetida bolaning shaxsiy kodi yo’q', pk.json.children[0].student.code === undefined, JSON.stringify(pk.json.children[0].student));
+  const newPc = await req('/api/parent/code', { method: 'POST', cookie: dir, body: { id: par.json.parent.id } });
+  eq('Ota-ona kodi yangilandi', newPc.status, 200);
+  eq('Eski sessiya yopildi', (await req('/api/kabinet/learning', { cookie: pk.cookie })).status, 401);
+  const pk2 = await req('/api/kabinet', { method: 'POST', body: { code: newPc.json.code } });
+  eq('Yangi kod bilan kirdi', pk2.status, 200);
+  eq('Ota-ona o’chirildi', (await req('/api/parent/delete', { method: 'POST', cookie: dir, body: { id: par.json.parent.id } })).status, 200);
+  eq('O’chirilgandan keyin sessiya ishlamaydi', (await req('/api/kabinet/payments', { cookie: pk2.cookie })).status, 401);
+
+  await put('users/' + ID('u2'), { id: ID('u2'), login: 'adm_' + R, name: 'Admin', role: 'admin', active: true, perms: { 'settings.edit': true } }, dir, { password: 'Admin12345x' });
+  const adm = await login('adm_' + R, 'Admin12345x');
+  eq('Sozlama ruxsatli admin zaxiradan tiklay olmaydi', (await req('/api/backup/restore', { method: 'POST', cookie: adm, body: { confirm: 'TIKLASH', dump: {} } })).status, 403);
+  eq('Admin zaxira faylini yuklab ololmaydi', (await req('/api/backup/file?name=x.json', { cookie: adm })).status, 403);
+  eq('Direktor parolsiz tiklay olmaydi', (await req('/api/backup/restore', { method: 'POST', cookie: dir, body: { confirm: 'TIKLASH', dump: {} } })).status, 403);
+
+  eq('O’qituvchi Telegram guruh ulanishini tasdiqlay olmaydi', (await req('/api/group/tglink', { method: 'POST', cookie: teach, body: { groupId: ID('g1'), action: 'approve' } })).status, 403);
+
+  const teach2 = await login('ust_' + R, 'Ustoz12345');
+  await put('users/' + ID('u1'), { id: ID('u1'), login: 'ust_' + R, name: 'Ustoz Lms', role: 'oqituvchi', staffId: ID('t1'), active: true }, dir, { password: 'Yangi12345x' });
+  eq('Parol almashgach eski sessiya yopildi', (await req('/api/me', { cookie: teach2 })).status, 401);
+  ok('Yangi parol bilan kiradi', !!(await login('ust_' + R, 'Yangi12345x')));
+
   stopServer();
   console.log(out.join('\n'));
   console.log('\n' + '─'.repeat(52));

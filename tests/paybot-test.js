@@ -26,6 +26,7 @@ const sent = [];
 async function fakeSend(chatId, text, kb) { sent.push({ chatId: String(chatId), text: String(text), kb }); return {}; }
 const lastTo = id => (sent.filter(m => m.chatId === String(id)).slice(-1)[0] || {});
 
+function eq4(n, got, want) { ok(n, got === want, 'kutilgan ' + want + ', olindi ' + got); }
 (async () => {
   const store = createStore();
   /* Soddalashtirilgan to'lov yozuvchisi (serverdagi autoCardPayment o'rnida) */
@@ -93,9 +94,24 @@ const lastTo = id => (sent.filter(m => m.chatId === String(id)).slice(-1)[0] || 
   ok('Bir xabar ikki marta yozilmaydi', (await store.list('payments/')).length === 1);
   ok('s2 ning da’vosi tegilmadi', (await store.get('payclaim/' + c2.id)).status === 'kutilmoqda');
 
-  section('4. Dumsiz to’lov ham taniladi (faqat bitta mos da’vo bo’lsa)');
+  section('4. Dumsiz to’lov: sukut bo’yicha qo’lda tasdiqlashga, sozlamada yoqilsa — avtomatik');
   await B.onBankPost({ id: -100777, type: 'channel' }, { text: 'Пополнение ➕ 400 000.00 UZS *9012', message_id: 11 });
-  ok('s2 400 000 to’lagan — tasdiqlandi', (await store.get('payclaim/' + c2.id)).status === 'tasdiqlandi');
+  ok('s2 400 000 to’lagan — avtomatik tasdiqlanmadi', (await store.get('payclaim/' + c2.id)).status !== 'tasdiqlandi');
+  ok('Kirim qo’lda tekshirishga tushdi', (await paybot.listCol(store, 'banktx')).some(t => t.amount === 400000 && t.status === 'mos-emas'));
+  const sx = (await store.get('meta/settings')) || {};
+  sx.bot = Object.assign({}, sx.bot, { payLooseMatch: true });
+  await store.set('meta/settings', sx);
+  await B.onBankPost({ id: -100777, type: 'channel' }, { text: 'Пополнение ➕ 400 000.00 UZS *9012', message_id: 12 });
+  ok('Sozlama yoqilgach dumsiz to’lov tasdiqlandi', (await store.get('payclaim/' + c2.id)).status === 'tasdiqlandi');
+
+  section('4b. Bank chati guruh bo’lsa — odam yozgan xabar to’lov emas');
+  sx.bot = Object.assign({}, sx.bot, { payBankChat: '-100778' });
+  await store.set('meta/settings', sx);
+  const before4b = (await paybot.listCol(store, 'banktx')).length;
+  await B.onBankPost({ id: -100778, type: 'supergroup' }, { from: { id: 555, is_bot: false }, text: 'Пополнение ➕ 350 037.00 UZS *9012', message_id: 13 });
+  eq4('Odam yozgan soxta bildirishnoma yozilmadi', (await paybot.listCol(store, 'banktx')).length, before4b);
+  await B.onBankPost({ id: -100778, type: 'supergroup' }, { from: { id: 777, is_bot: true }, text: 'Пополнение ➕ 350 038.00 UZS *9012', message_id: 14 });
+  eq4('Bank boti yozgani qabul qilindi', (await paybot.listCol(store, 'banktx')).length, before4b + 1);
 
   section('5. Muddatdan oldin eslatma');
   await store.set('invoices/i3', { id: 'i3', studentId: 's3', month: today.slice(0, 7), final: 350000, dueDate: plus(2) });

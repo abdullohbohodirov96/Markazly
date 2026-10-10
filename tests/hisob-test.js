@@ -169,7 +169,8 @@ const A = globalThis.A;
   /* Qo'lda yozilgan kun ustun turadi */
   eq('Qo’lda yozilgan kun ustun', A.dueDayOf({ joinedAt: PREV + '-17', dueDay: 10 }, { dueDay: 5 }), 10);
   /* 29, 30, 31 da qo'shilgan o'quvchi fevralda ham sanaga ega bo'lsin */
-  eq('31-sida qo’shilgan — 28 ga tushadi', A.dueDayOf({ joinedAt: '2026-01-31' }, {}), 28);
+  eq('31-sida qo’shilgan — kun 31 saqlanadi', A.dueDayOf({ joinedAt: '2026-01-31' }, {}), 31);
+  eq('…fevralda muddat oyning oxirgi kuni', A.dueDateOf({ joinedAt: '2026-01-31' }, '2026-02', {}), '2026-02-28');
   /* Guruhga qo'shilgan kunidan OLDIN muddat qo'yilmaydi */
   eq('Birinchi oyda muddat qo’shilgan kunidan oldin emas',
     A.dueDateOf(mC, PREV, { dueDay: 5 }), PREV + '-26');

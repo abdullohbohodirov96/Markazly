@@ -238,9 +238,17 @@ function lastTo(chatId) {
   ok('Notanish kod bilan ulanmaydi', !(await store.get('groups/g9')).tgChat);
 
   await B.linkGroupChat(-100200, 'AlBayan · Kechki A1 · 4821');
+  const g9p = await store.get('groups/g9');
+  ok('Kod to’g’ri bo’lsa ham xodim tasdig’isiz ulanmaydi', !g9p.tgChat, String(g9p.tgChat));
+  ok('Ulanish so’rovi saqlandi', g9p.tgPending && g9p.tgPending.chatId === '-100200', JSON.stringify(g9p.tgPending));
+  ok('Topilgan va topilmagan kodga bir xil javob (kod oshkor emas)', /So’rov qabul qilindi/.test(lastTo(-100200)));
+  /* Begona guruh shu kod bilan so'rov yuborsa ham ulanib ololmaydi */
+  const appr = await bot.approveGroupLink('g9');
+  ok('Xodim tasdiqladi', appr.ok, JSON.stringify(appr));
   const g9b = await store.get('groups/g9');
   ok('Kod bo’yicha guruhga ulandi', String(g9b.tgChat) === '-100200', String(g9b.tgChat));
   ok('Guruh nomi saqlandi', /4821/.test(g9b.tgTitle || ''), g9b.tgTitle);
+  ok('So’rov tozalandi', !g9b.tgPending);
   ok('Guruhga "ulandim" xabari bordi', /Ulandim/.test(lastTo(-100200)), lastTo(-100200).slice(0, 90));
   ok('Xabarda guruh nomi bor', /Kechki A1/.test(lastTo(-100200)));
 
@@ -248,6 +256,10 @@ function lastTo(chatId) {
 
   await B.onGroupUpdate(-100200, 'AlBayan · Kechki A1 · 4821', '/ulash');
   ok('/ulash qayta ulaydi', /yangilandi|Ulandim/.test(lastTo(-100200)), lastTo(-100200).slice(0, 60));
+
+  /* Hujumchi: o'z guruhini shu kod bilan nomlab /ulash yuboradi */
+  await B.onGroupUpdate(-100999, 'Soxta · 4821', '/ulash');
+  ok('Begona guruh ulangan guruhni o’g’irlay olmaydi', String((await store.get('groups/g9')).tgChat) === '-100200');
 
   const nBefore = sent.length;
   await B.onGroupUpdate(-100200, 'AlBayan · Kechki A1 · 4821', 'shunchaki suhbat');

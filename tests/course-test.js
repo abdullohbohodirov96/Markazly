@@ -127,6 +127,10 @@ const ID = n => R + '_' + n;
   eq('Qabul qilindi', acc.status, 200);
   v = (await req('/api/kabinet/course', { cookie: kc })).json;
   ok('Baho 5, holat qabul', v.lessons[0].hw.grade === 5 && v.lessons[0].hw.status === 'qabul');
+  eq('Qabul qilingan vazifani qayta topshirib bo’lmaydi (baho o’chmaydi)',
+    (await kpost('course/homework', { lessonId: L1.id, autoAnswers: hwA, texts: ['boshqa javob'] })).status, 409);
+  v = (await req('/api/kabinet/course', { cookie: kc })).json;
+  ok('Baho saqlanib qoldi', v.lessons[0].hw.grade === 5);
 
   section('5. Ustoz/admin darsga o’tkazadi');
   const L5 = C.LESSONS[4];

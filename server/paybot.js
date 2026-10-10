@@ -65,6 +65,8 @@ function payConf(settings) {
     card: String(b.payCard || '').replace(/[^\d ]/g, '').trim(),
     holder: String(b.payHolder || '').trim(),
     bank: String(b.payBankChat || '').trim(),            // kanal: -100… yoki @nom
+    /* Guruhda bildirishnoma yuborishi mumkin bo'lgan (bot bo'lmagan) Telegram id lar, vergul bilan */
+    senders: String(b.payBankSenders || '').split(/[\s,;]+/).filter(Boolean),
     preDays: b.payPreDays == null ? 2 : Math.max(0, Number(b.payPreDays) || 0)
   };
 }
@@ -74,6 +76,8 @@ function isBankChat(conf, chat) {
   const want = conf.bank.replace(/^@/, '').toLowerCase();
   return String(chat.id) === conf.bank || (chat.username && String(chat.username).toLowerCase() === want);
 }
+
+function bankSenders(conf) { return (conf && conf.senders) || []; }
 
 function fmt(n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
 function cardFmt(c) { return String(c).replace(/\s/g, '').replace(/(\d{4})(?=\d)/g, '$1 '); }
@@ -168,13 +172,27 @@ async function reconcile(ctx) {
   let claims = (await listCol(ctx.store, 'payclaim'))
     .filter(c => (c.status === 'kutilmoqda' || c.status === 'tolandi') && now - c.atMs < CLAIM_TTL_MS);
   let matched = 0, unmatched = 0;
+  const st = (await ctx.store.get('meta/settings')) || {};
+  const loose = !!(st.bot && st.bot.payLooseMatch === true);
   for (const tx of txs.sort((a, b) => a.atMs - b.atMs)) {
     /* 1) aniq summa (dum bilan) */
     let hit = claims.filter(c => c.amount === tx.amount);
-    /* 2) dumsiz to'lagan bo'lsa — faqat bitta da'vo shu summaga mos kelsa */
-    if (!hit.length) {
+    /* Dumsiz (yaxlit) summa: sukut bo'yicha avtomatik biriktirilmaydi — begona odamning
+       tasodifiy o'tkazmasi boshqa o'quvchiga yozilib ketmasin, kirim qo'lda tasdiqlanadi.
+       Markaz xohlasa yoqadi: settings.bot.payLooseMatch = true (faqat bitta mos da'vo bo'lsa). */
+    if (!hit.length && loose) {
       const base = claims.filter(c => c.base === tx.amount);
       if (base.length === 1) hit = base;
+    }
+    if (!hit.length && claims.some(c => c.base === tx.amount)) {
+      tx.status = 'mos-emas';
+      await ctx.store.set('banktx/' + tx.id, tx);
+      unmatched++;
+      if (ctx.notifyStaff) {
+        ctx.notifyStaff('Kartaga ' + fmt(tx.amount) + ' so’m (dumsiz) tushdi — o’quvchini aniq bilib bo’lmaydi.\n' +
+          'ERP → Telegram bot → Karta to’lovlari bo’limida qo’lda tasdiqlang.');
+      }
+      continue;
     }
     if (hit.length === 1) {
       const c = hit[0];
@@ -205,6 +223,7 @@ async function reconcile(ctx) {
 }
 
 module.exports = {
+  bankSenders,
   parseBank, payConf, isBankChat, startClaim, markPaid, saveBankTx, reconcile, dueFor,
   fmt, cardFmt, CLAIM_TTL_MS, listCol
 };

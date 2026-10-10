@@ -154,6 +154,39 @@ def v_fears(x, y, w, h):
         o += rr(bx, by, 640, 150, 34, "#2A1D1B", "#5A2A24", 3) + T(l1, bx + 36, by + 64, 38, SEMI, "#F3D6D0") + T(l2, bx + 36, by + 116, 38, SEMI, "#F3D6D0")
         o += f'<circle cx="{bx+640}" cy="{by+20}" r="40" fill="{MINT}"/>' + ic("check", bx + 622, by + 2, 36, INK, 3.2)
     return o
+import sys as _s; _s.path.insert(0, os.path.dirname(OUTDIR))
+from arabic import TA, AR
+def cover_ar(num, tag, lines, visual, name, red_glow=False):
+    b = '<circle cx="540" cy="620" r="560" fill="url(#%s)"/>' % ("rd" if red_glow else "halo")
+    b += brand(270)
+    tw = AR.width(tag, 32) + 60
+    b += rr(CX - tw / 2 - 40, 378, tw + 80, 60, 30, "#0F3A2C", MINT, 2) + T(f"{num:02d}", CX + tw / 2 + 6, 418, 30, SEMI, MINT, "middle") + TA(tag, CX - 10, 420, 32, AR, FG)
+    b += rr(110, 470, 860, 420, 40, SURF, LINE, 2) + visual(110, 470, 860, 420)
+    for k, t in enumerate(lines):
+        size = 100
+        while AR.width(t, size) > 900: size -= 4
+        b += TA(t, CX, 1040 + k * 124, size, AR, "url(#gh)" if k == len(lines) - 1 else FG)
+    t = "جرّب ٧ أيام مجاناً"; w = AR.width(t, 44) + 90
+    b += rr(CX - w / 2, 1360, w, 92, 46, "url(#gh)") + TA(t, CX, 1422, 44, AR, INK)
+    save(b, name)
+def v_ar(x, y, w, h):
+    o = ""; kw = (w - 80 - 30) / 3; kx = x + w - 40
+    for lab, val, col in [("الطلاب", "368", FG), ("الإيرادات", "184M", FG), ("المتأخّرون", "12", BAD)]:
+        kx -= kw; o += rr(kx, y + 40, kw, 140, 22, SURF2) + TA(lab, kx + kw - 22, y + 90, 28, AR, MUTED, "right") + T(val, kx + kw - 22, y + 155, 46, SEMI, col, "end"); kx -= 15
+    o += rr(x + 40, y + 210, w - 80, 170, 26, "url(#best)", MINT, 2) + TA("كِتَاب", x + w - 140, y + 320, 80, AR, FG) + T("+10", x + 120, y + 315, 50, SEMI, AMB, "middle")
+    return o
+def v_lugat(x, y, w, h):
+    o = ""
+    for k, (a, u) in enumerate([("كِتَاب", "kitob"), ("قَلَم", "qalam"), ("مَدْرَسَة", "maktab")]):
+        yy = y + 40 + k * 120
+        o += rr(x + 40, yy, w - 80, 104, 22, "url(#best)" if k == 0 else SURF2, MINT if k == 0 else None) + TA(a, x + w - 80, yy + 72, 54, AR, FG, "right") + T(u, x + 80, yy + 66, 32, MED, MUTED) + rr(x + w / 2 - 60, yy + 28, 120, 48, 24, "#2A2412", AMB, 2) + T("+10", x + w / 2, yy + 62, 30, SEMI, AMB, "middle")
+    return o
+def v_raqobat(x, y, w, h):
+    o = rr(x + 40, y + 40, 360, 340, 26, "#1A1F1D", "#3A4A43", 3) + rr(x + 90, y + 90, 260, 180, 10, "#F6C76B") + T("Daftar", x + 220, y + 330, 38, SEMI, MUTED, "middle")
+    o += f'<path d="M{x+70} {y+70} L{x+370} {y+350} M{x+370} {y+70} L{x+70} {y+350}" stroke="{BAD}" stroke-width="9" stroke-linecap="round"/>'
+    o += rr(x + w - 400, y + 40, 360, 340, 26, "#123A2C", MINT, 4) + TA("تعلّم العربية", x + w - 220, y + 150, 46, AR, "url(#gh)") + T("Sayt + tizim", x + w - 220, y + 230, 38, SEMI, FG, "middle") + f'<circle cx="{x+w-220}" cy="{y+310}" r="40" fill="{MINT}"/>' + ic("check", x + w - 240, y + 290, 40, INK, 3.4)
+    return o
+AMB = "#F6C76B"
 cover(1, "Hisobot", ["Admin", "hisobotiga", "ishonasizmi?"], v_admin, "cover_01_admin.png", True)
 cover(2, "Markazly", ["Markazingiz", "bitta tizimda", "to‘liq"], v_system, "cover_02_tizim.png")
 cover(3, "Qarzdorlar", ["Har oy", "qancha pul", "yo‘qotyapsiz?"], v_loss, "cover_03_yoqotish.png", True)
@@ -162,11 +195,14 @@ cover(5, "Ota-onalar", ["“Bolam darsga", "keldimi?”", "Javob tayyor"], v_par
 cover(8, "Taqqoslash", ["Excel’da 10 daqiqa,", "Markazly’da", "3 soniya"], v_excel, "cover_08_excel.png", True)
 cover(9, "Narx", ["Bitta tushlik", "narxiga —", "butun tizim"], v_price, "cover_09_narx.png")
 cover(10, "Savollar", ["Yangi tizimdan", "qo‘rqasizmi?", "Javob shu yerda"], v_fears, "cover_10_savollar.png", True)
+cover_ar(11, "للمراكز", ["هل تعرف ما يحدث", "في مركزك؟", "ماركازلي يُريك كلّ شيء"], v_ar, "cover_11_arabcha.png")
+cover(12, "Arab tili", ["Arab tili", "so‘zlarni", "o‘yin bilan yodlang"], v_lugat, "cover_12_arab_lugat.png")
+cover(13, "Arab tili", ["Raqobatda", "ajralib turing", "sayt + tizim"], v_raqobat, "cover_13_arab_raqobat.png", True)
 cover(7, "Umumiy", ["Hammasi", "bitta", "tizimda"], v_all, "cover_07_umumiy.png")
 cover(6, "Bepul sinov", ["Avval sinang,", "yoqsa", "keyin to‘lang"], v_trial, "cover_06_sinov.png")
 
 # profile grid preview (3:4 centre crops, newest first = 6..1)
-names = ["cover_10_savollar", "cover_09_narx", "cover_08_excel", "cover_07_umumiy", "cover_03_yoqotish", "cover_01_admin"]
+names = ["cover_13_arab_raqobat", "cover_12_arab_lugat", "cover_11_arabcha", "cover_10_savollar", "cover_09_narx", "cover_08_excel"]
 g = Image.new("RGB", (3 * 360 + 8, 2 * 480 + 4), "white")
 for i, n in enumerate(names):
     g.paste(Image.open(os.path.join(OUTDIR, n + "_tor.png")), ((i % 3) * 364, (i // 3) * 484))

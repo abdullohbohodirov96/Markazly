@@ -177,26 +177,10 @@ const GA_TAG = !GA_ID ? '' : `
 </script>
 `;
 
-/* ---------------- Markaz rangi (markaz.json → rang.asosiy) ----------------
-   Bitta asosiy rangdan butun palitra hosil qilinadi: to'q (yon menyu),
-   och, juda och fon va tungi rejim uchun yorqinroq varianti.          */
-function hexToRgb(h) { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
-function rgbToHex(r) { return '#' + r.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join(''); }
-function mix(h, to, t) { const a = hexToRgb(h), b = hexToRgb(to); return rgbToHex(a.map((v, i) => v + (b[i] - v) * t)); }
-const BASE = MARKAZ.CONF.rang.asosiy;
-const PAL = {
-  brand: BASE, deep: mix(BASE, '#000000', 0.35), light: mix(BASE, '#ffffff', 0.18), soft: mix(BASE, '#ffffff', 0.88),
-  dBrand: mix(BASE, '#ffffff', 0.38), dDeep: mix(BASE, '#ffffff', 0.55), dLight: mix(BASE, '#ffffff', 0.46),
-  dSoft: mix(BASE, '#151b27', 0.78), dActive: mix(BASE, '#151b27', 0.45)
-};
-const DARK_VARS = `--brand:${PAL.dBrand};--brand-deep:${PAL.dDeep};--brand-light:${PAL.dLight};--brand-soft:${PAL.dSoft};--side-active-bg:${PAL.dActive}`;
-const colorTag = `<style id="markaz-rang">
-:root{--brand:${PAL.brand};--brand-deep:${PAL.deep};--brand-light:${PAL.light};--brand-soft:${PAL.soft};--side-bg:${PAL.deep};--side-active-ink:${PAL.deep}}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){${DARK_VARS}}}
-:root[data-theme="dark"]{${DARK_VARS}}
-</style>`;
-/* Brauzer uchun markaz sozlamasining OCHIQ qismi (maxfiy narsa yo'q) */
-const markazTag = '<script>window.MARKAZ = ' + JSON.stringify(MARKAZ.publicConf()).replace(/</g, '\\u003c') + ';</script>';
+/* Markaz rangi va brauzer sozlamasi — server/markaz.js da (server ham har so'rovda yangisini qo'yadi) */
+const PAL = MARKAZ.palette();
+const colorTag = MARKAZ.colorTag();
+const markazTag = MARKAZ.markazTag();
 
 const head = `<!doctype html>
 <html lang="uz">

@@ -45,6 +45,7 @@ function normalize(raw) {
     qisqaNom: str(r.qisqaNom, 30) || nom,
     nomVariantlari: (Array.isArray(r.nomVariantlari) ? r.nomVariantlari : []).map(s => str(s, 80)).filter(Boolean),
     sohasi: str(r.sohasi, 80) || 'O‘quv markazi',
+    fan: str(r.fan, 80),
     logoMatn: str(r.logoMatn, 20),
     aloqa: {
       telefon: str(process.env.SITE_PHONE || al.telefon, 30),
@@ -80,11 +81,43 @@ function on(name) { return CONF.modullar[name] === true; }
 /** Brauzerga beriladigan ochiq qism (index.html ichiga yoziladi) */
 function publicConf() {
   return {
-    nom: CONF.nom, qisqaNom: CONF.qisqaNom, sohasi: CONF.sohasi, logoMatn: CONF.logoMatn,
+    nom: CONF.nom, qisqaNom: CONF.qisqaNom, sohasi: CONF.sohasi, fan: CONF.fan, logoMatn: CONF.logoMatn,
     aloqa: CONF.aloqa, sayt: CONF.sayt, rang: CONF.rang,
     ish: { darsDaqiqa: CONF.ish.darsDaqiqa, tillar: CONF.ish.tillar, chekPrefiksi: CONF.ish.chekPrefiksi },
     modullar: CONF.modullar
   };
 }
 
-module.exports = { CONF, on, publicConf, normalize, FILE };
+/* ---------------- Rang palitrasi (bitta asosiy rangdan) ---------------- */
+function hexToRgb(h) { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function rgbToHex(r) { return '#' + r.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join(''); }
+function mix(h, to, t) { const a = hexToRgb(h), b = hexToRgb(to); return rgbToHex(a.map((v, i) => v + (b[i] - v) * t)); }
+function palette() {
+  const B = CONF.rang.asosiy;
+  return {
+    brand: B, deep: mix(B, '#000000', 0.35), light: mix(B, '#ffffff', 0.18), soft: mix(B, '#ffffff', 0.88),
+    dBrand: mix(B, '#ffffff', 0.38), dDeep: mix(B, '#ffffff', 0.55), dLight: mix(B, '#ffffff', 0.46),
+    dSoft: mix(B, '#151b27', 0.78), dActive: mix(B, '#151b27', 0.45)
+  };
+}
+function colorTag() {
+  const P = palette();
+  const dark = `--brand:${P.dBrand};--brand-deep:${P.dDeep};--brand-light:${P.dLight};--brand-soft:${P.dSoft};--side-active-bg:${P.dActive}`;
+  return `<style id="markaz-rang">
+:root{--brand:${P.brand};--brand-deep:${P.deep};--brand-light:${P.light};--brand-soft:${P.soft};--side-bg:${P.deep};--side-active-ink:${P.deep}}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){${dark}}}
+:root[data-theme="dark"]{${dark}}
+</style>`;
+}
+/** Brauzer uchun ochiq sozlama (inline skript; '<' ekranlanadi) */
+function markazTag() {
+  return '<script>window.MARKAZ = ' + JSON.stringify(publicConf()).replace(/</g, '\\u003c') + ';</script>';
+}
+/** index.html dagi eski teglarni joriy markaz.json bilan almashtirish */
+function injectInto(html) {
+  return String(html)
+    .replace(/<style id="markaz-rang">[\s\S]*?<\/style>/, () => colorTag())
+    .replace(/<script>window\.MARKAZ = [\s\S]*?<\/script>/, () => markazTag());
+}
+
+module.exports = { CONF, on, publicConf, normalize, FILE, palette, colorTag, markazTag, injectInto };

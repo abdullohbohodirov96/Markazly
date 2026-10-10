@@ -340,12 +340,12 @@ const submitRaw = (b) => req('/api/test/submit', { method: 'POST', body: b });
     Object.values((leads.json || {}).items || {}).some(l => l && l.source === 'Daraja testi'),
     'murojaat topilmadi');
 
-  section('   Ismsiz topshirilsa murojaat ochilmaydi');
+  section('   Telefon majburiy: har bir natija murojaat bo‘lib tushadi');
   const s5 = await start();
   const nl0 = Object.values((await req('/api/collection?name=leads', { cookie: dir })).json.items || {}).length;
   await submit({ sessionId: s5.json.id, answers: [] });
   const nl1 = Object.values((await req('/api/collection?name=leads', { cookie: dir })).json.items || {}).length;
-  eq('Murojaatlar soni o’zgarmadi', nl1, nl0);
+  eq('Murojaat qo‘shildi', nl1, nl0 + 1);
 
   stopServer();
   console.log(out.join('\n'));

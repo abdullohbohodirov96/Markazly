@@ -3770,6 +3770,16 @@ function serveStatic(req, res, pathname) {
         'X-Content-Type-Options': 'nosniff',
         'Cache-Control': codeFile ? 'no-cache' : 'public, max-age=86400'
       };
+      /* PWA manifest — markaz nomi va rangi joriy markaz.json dan */
+      if (rel === '/manifest.webmanifest') {
+        try {
+          const man = JSON.parse(String(data));
+          const MK = require('./markaz');
+          man.name = MK.CONF.nom; man.short_name = MK.CONF.qisqaNom; man.theme_color = MK.palette().deep;
+          data = Buffer.from(JSON.stringify(man, null, 2));
+          delete head.ETag;
+        } catch (e) { /* asl fayl beriladi */ }
+      }
       if (tag) head.ETag = tag;
       /* Boshqa HTML sahifalarga ham (masalan qissa.html) bosh sahifadagidek CSP */
       if (ext === '.html') {
@@ -3914,7 +3924,7 @@ const server = http.createServer({ connectionsCheckingInterval: 5000 }, async (r
   try {
     if (url.pathname.indexOf('/api/') === 0) return await handleApi(req, res, url);
     if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) {
-      const html = await fs.promises.readFile(path.join(ROOT, 'index.html'), 'utf8');
+      const html = require('./markaz').injectInto(await fs.promises.readFile(path.join(ROOT, 'index.html'), 'utf8'));
       const settings = (await store.get('meta/settings')) || {};
       const page = seo.render(html, settings, req.headers.host || 'localhost');
       /* Ichki skriptlar xeshi — sahifa mazmunidan, shuning uchun 304 javobi

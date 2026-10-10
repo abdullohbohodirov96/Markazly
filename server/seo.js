@@ -125,7 +125,7 @@ function render(html, settings, host) {
   /* Sarlavha: odam nimani qidirsa, shu oldinda tursin — "arab tili
      kurslari Toshkentda". Markaz nomi oxirida. 60 belgidan oshmaydi,
      shuning uchun Google uni kesib tashlamaydi.                      */
-  const title = name === SITE_NAME ? CONTENT.TITLE : name + ' — ' + require('./markaz').CONF.sohasi;
+  const title = name === SITE_NAME ? CONTENT.TITLE : name + ' — ' + CONTENT.TITLE_TAIL;
 
   /* Tavsif: ixcham (~155 belgi), faqat haqiqiy ma'lumot. Manzil va
      telefon bu yerda takrorlanmaydi — ular tuzilgan ma'lumotda va

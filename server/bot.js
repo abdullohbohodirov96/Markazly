@@ -71,6 +71,11 @@ const PAID_BTN = 'To’ladim ✅';
 const BACK_BTN = 'Orqaga';
 const PAY_KB = [[{ text: PAID_BTN }], [{ text: BACK_BTN }]];
 const MODON = require('./markaz').on;
+/** "https://t.me/Kanal" yoki "@Kanal" → "@Kanal" (viktorina kanali uchun standart) */
+function tgChannelName(u) {
+  const m = /(?:t\.me\/|^@)([A-Za-z0-9_]{4,64})\/?$/.exec(String(u || '').trim());
+  return m ? '@' + m[1] : '';
+}
 /* Menyu markaz modullariga qarab: to'lov boti va veb-kabinet o'chiq bo'lsa tugmasi ham yo'q */
 const MENU = [
   MODON('tolovBoti') ? [{ text: PAY_BTN }] : null,
@@ -1366,7 +1371,7 @@ async function quizConf() {
   const b = ((await settings()).bot) || {};
   return {
     on: b.quizOn !== false,
-    channel: String(b.quizChannel || process.env.QUIZ_CHANNEL || '').trim(),
+    channel: String(b.quizChannel || process.env.QUIZ_CHANNEL || tgChannelName(require('./markaz').CONF.aloqa.telegramKanal)).trim(),
     /* Shu sanadan (Toshkent vaqti) boshlab yuboriladi */
     start: /^\d{4}-\d{2}-\d{2}$/.test(String(b.quizStart || '')) ? b.quizStart : (process.env.QUIZ_START || '2026-10-10'),
     slots: QUIZ_SLOTS

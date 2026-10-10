@@ -395,7 +395,7 @@ async function login(l, p) {
   eq('Tasdiqlashsiz tiklash rad etildi', noConfirm.status, 400);
   const badDump = await req('/api/backup/restore', {
     method: 'POST', cookie: dirCookie,
-    body: { confirm: 'TIKLASH', dump: { app: 'albyana-erp', docs: { 'students/x': { id: 'x' } } } }
+    body: { confirm: 'TIKLASH', password: PASS, dump: { app: 'albyana-erp', docs: { 'students/x': { id: 'x' } } } }
   });
   eq('Foydalanuvchisiz zaxira rad etildi', badDump.status, 400);
   const teacherRestore = await req('/api/backup/restore', {
@@ -407,8 +407,12 @@ async function login(l, p) {
   await put('rooms/zax_test', { id: 'zax_test', name: 'Sinov xonasi' }, dirCookie);
   const beforeRestore = await req('/api/doc?path=rooms/zax_test', { cookie: dirCookie });
   ok('Sinov yozuvi qo’shildi', !!(beforeRestore.json && beforeRestore.json.data));
+  const noPass = await req('/api/backup/restore', {
+    method: 'POST', cookie: dirCookie, body: { confirm: 'TIKLASH', name: bkName, password: 'xato-parol' }
+  });
+  eq('Noto‘g‘ri parol bilan tiklab bo‘lmaydi', noPass.status, 403);
   const doRestore = await req('/api/backup/restore', {
-    method: 'POST', cookie: dirCookie, body: { confirm: 'TIKLASH', name: bkName }
+    method: 'POST', cookie: dirCookie, body: { confirm: 'TIKLASH', name: bkName, password: PASS }
   });
   ok('Tiklash bajarildi', doRestore.status === 200 && doRestore.json.ok, doRestore.text);
   ok('Tiklashdan oldingi zaxira saqlandi', !!doRestore.json.safety);

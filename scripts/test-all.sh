@@ -16,7 +16,7 @@ for t in $ALL; do
     timeout 200 node tests/$t.js > "$TMP/$t.log" 2>&1; rc=$?
   else
     port=$((port+1)); d="$TMP/data_$t"; mkdir -p "$d"
-    PORT=$port DATA_DIR=$d BACKUP_DIR=$d/bk SEED_DIRECTOR_PASSWORD="$PASS" NODE_ENV=test \
+    FLOOD_MAX=$([ "$t" = toshqin-test ] && echo 50 || echo "${FLOOD_MAX_DEF:-}") PORT=$port DATA_DIR=$d BACKUP_DIR=$d/bk SEED_DIRECTOR_PASSWORD="$PASS" NODE_ENV=test \
       node server/index.js > "$TMP/$t.server.log" 2>&1 & sp=$!
     for i in $(seq 1 50); do curl -s -o /dev/null localhost:$port/api/health && break; sleep 0.2; done
     timeout 200 node tests/$t.js $port "$PASS" > "$TMP/$t.log" 2>&1; rc=$?

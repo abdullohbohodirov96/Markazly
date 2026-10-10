@@ -36,7 +36,8 @@ const ALT_NAMES = (process.env.APP_ALT_NAMES
   .map(s => s.trim()).filter(Boolean);
 
 /* ~60 belgi: brend oldinda (nom bo'yicha qidiruv), keyin asosiy so'z */
-const TITLE = String(SAYT.sarlavha || (NAME + ' — ' + M.sohasi)).slice(0, 90);
+const TITLE_TAIL = String(SAYT.sarlavhaOxiri || M.sohasi);
+const TITLE = String(SAYT.sarlavha || (NAME + ' — ' + TITLE_TAIL)).slice(0, 90);
 
 /* ~155 belgi: kim, nima, qanday, chaqiruv */
 const DESC = String(SAYT.tavsif || (NAME + ' — ' + M.sohasi.toLowerCase() + '. ' +
@@ -86,14 +87,16 @@ function faqLd() {
 
 /* schema.org Course — markaz yo'nalishi (markaz.json dagi soha va tavsif) */
 function courseLd(providerId) {
-  return {
+  const c = {
     '@type': 'Course',
-    name: M.sohasi,
-    description: DESC,
+    name: SAYT.kursNomi || (M.fan ? M.fan + ' kurslari' : M.sohasi),
+    description: SAYT.kursTavsifi || DESC,
     inLanguage: 'uz',
     provider: { '@id': providerId }
   };
+  if (M.fan) { c.teaches = M.fan; c.about = { '@type': 'Thing', name: M.fan }; }
+  return c;
 }
 const CITY = M.aloqa.shahar || 'Toshkent';
 
-module.exports = { courseLd, CITY, NAME, PHONE, LINKS, FACEBOOK, TAGLINES, ALT_NAMES, TITLE, DESC, FAQ, seoText, faqLd };
+module.exports = { courseLd, CITY, TITLE_TAIL, NAME, PHONE, LINKS, FACEBOOK, TAGLINES, ALT_NAMES, TITLE, DESC, FAQ, seoText, faqLd };
